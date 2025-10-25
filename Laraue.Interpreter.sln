@@ -6,6 +6,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8F2615D0-74E
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Laraue.Interpreter.Parsing", "src\Laraue.Interpreter.Parsing\Laraue.Interpreter.Parsing.csproj", "{42829880-C2F5-4A69-8469-73EF2FBD90FD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Laraue.Interpreter.Common", "src\Laraue.Interpreter.Common\Laraue.Interpreter.Common.csproj", "{66F78E2A-4E39-463D-BF71-AE3F1D011B88}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,9 +22,14 @@ Global
 		{42829880-C2F5-4A69-8469-73EF2FBD90FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{42829880-C2F5-4A69-8469-73EF2FBD90FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{42829880-C2F5-4A69-8469-73EF2FBD90FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66F78E2A-4E39-463D-BF71-AE3F1D011B88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66F78E2A-4E39-463D-BF71-AE3F1D011B88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66F78E2A-4E39-463D-BF71-AE3F1D011B88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66F78E2A-4E39-463D-BF71-AE3F1D011B88}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{0A9FCB07-9065-468B-A8A5-7311B2F7D804} = {8F2615D0-74E3-4743-91BB-80DBA80AE464}
 		{42829880-C2F5-4A69-8469-73EF2FBD90FD} = {8F2615D0-74E3-4743-91BB-80DBA80AE464}
+		{66F78E2A-4E39-463D-BF71-AE3F1D011B88} = {8F2615D0-74E3-4743-91BB-80DBA80AE464}
 	EndGlobalSection
 EndGlobal

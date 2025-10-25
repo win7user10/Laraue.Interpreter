@@ -4,4 +4,8 @@
         <IsPackable>true</IsPackable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Laraue.Interpreter.Common\Laraue.Interpreter.Common.csproj" />
+    </ItemGroup>
+
 </Project>
