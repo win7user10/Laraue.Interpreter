@@ -1,10 +1,10 @@
 # Laraue.Interpreter  
 
-[![latest version](https://img.shields.io/nuget/v/Laraue.Interpreter.Scanning)](https://www.nuget.org/packages/Laraue.Interpreter.Scanning)
-[![latest version](https://img.shields.io/nuget/dt/Laraue.Interpreter.Scanning)](https://www.nuget.org/packages/Laraue.Interpreter.Scanning)  
+| Package                     | Link                                                                                                                                        | Downloads                                                                                                                                    |
+|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| Laraue.Interpreter.Scanning | [![latest version](https://img.shields.io/nuget/v/Laraue.Interpreter.Scanning)](https://www.nuget.org/packages/Laraue.Interpreter.Scanning) | [![latest version](https://img.shields.io/nuget/dt/Laraue.Interpreter.Scanning)](https://www.nuget.org/packages/Laraue.Interpreter.Scanning) |
+| Laraue.Interpreter.Parsing  | [![latest version](https://img.shields.io/nuget/v/Laraue.Interpreter.Parsing)](https://www.nuget.org/packages/Laraue.Interpreter.Parsing)   | [![latest version](https://img.shields.io/nuget/dt/Laraue.Interpreter.Parsing)](https://www.nuget.org/packages/Laraue.Interpreter.Parsing)   |
 
-[![latest version](https://img.shields.io/nuget/v/Laraue.Interpreter.Parsing)](https://www.nuget.org/packages/Laraue.Interpreter.Parsing)
-[![latest version](https://img.shields.io/nuget/dt/Laraue.Interpreter.Parsing)](https://www.nuget.org/packages/Laraue.Interpreter.Parsing)  
 
 The project is the just set of tools to implement a new Interpreter in CSharp.  
 Based on the examples from the [Crafting interpreters book](https://craftinginterpreters.com)
