@@ -1,7 +1,10 @@
 # Laraue.Interpreter  
 
-The project is the just set of tools to implement a new Interpreter in CSharp.
-Based on the examples from [Crafting interpreters book](https://craftinginterpreters.com)
+[![latest version](https://img.shields.io/nuget/v/Laraue.Interpreter)](https://www.nuget.org/packages/Laraue.Interpreter)
+[![latest version](https://img.shields.io/nuget/dt/Laraue.Interpreter)](https://www.nuget.org/packages/Laraue.Interpreter)
+
+The project is the just set of tools to implement a new Interpreter in CSharp.  
+Based on the examples from the [Crafting interpreters book](https://craftinginterpreters.com)
 
 ## Laraue.Interpreter.Scanning
 
