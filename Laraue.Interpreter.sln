@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Laraue.Interpreter.Scanning
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8F2615D0-74E3-4743-91BB-80DBA80AE464}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Laraue.Interpreter.Parser", "src\Laraue.Interpreter.Parser\Laraue.Interpreter.Parser.csproj", "{42829880-C2F5-4A69-8469-73EF2FBD90FD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Laraue.Interpreter.Parsing", "src\Laraue.Interpreter.Parsing\Laraue.Interpreter.Parsing.csproj", "{42829880-C2F5-4A69-8469-73EF2FBD90FD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

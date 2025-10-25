@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
 using Laraue.Interpreter.Scanning;
 
-namespace Laraue.Interpreter.Parser;
+namespace Laraue.Interpreter.Parsing;
 
 /// <summary>
 /// Base class to implement a <see href="https://craftinginterpreters.com/parsing-expressions.html">Parser</see>.

@@ -1,6 +1,6 @@
 ﻿using Laraue.Interpreter.Scanning;
 
-namespace Laraue.Interpreter.Parser;
+namespace Laraue.Interpreter.Parsing;
 
 /// <summary>
 /// One of the parsing errors.

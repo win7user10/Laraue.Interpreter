@@ -1,4 +1,4 @@
-﻿namespace Laraue.Interpreter.Parser;
+﻿namespace Laraue.Interpreter.Parsing;
 
 /// <summary>
 /// The result of token parse.
