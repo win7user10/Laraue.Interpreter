@@ -37,7 +37,7 @@ public static class ParseResultExtensions
     /// <summary>
     /// Throw if any error exists in the parse result,
     /// </summary>
-    public static void ThrowOnAny<TTokenType, TResult>(
+    public static void ThrowOnAnyError<TTokenType, TResult>(
         this ParseResult<TTokenType, TResult> parseResult)
         where TTokenType : struct, Enum
         where TResult : class

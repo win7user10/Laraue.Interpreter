@@ -31,7 +31,7 @@ public static class ScanResultExtensions
     /// <summary>
     /// Throw if any error exists in the scan result,
     /// </summary>
-    public static void ThrowOnAny<TTokenType>(this ScanResult<TTokenType> scanResult)
+    public static void ThrowOnAnyError<TTokenType>(this ScanResult<TTokenType> scanResult)
         where TTokenType : struct, Enum
     {
         scanResult.GetCompileErrors().ThrowOnAny();

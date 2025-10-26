@@ -199,6 +199,17 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
     protected Token<TTokenType> Peek() => tokens[_current];
 
     /// <summary>
+    /// Check that token is equal to the passed or throws.
+    /// </summary>
+    protected void Check(TTokenType? tokenType, string errorMessage)
+    {
+        if (!Check(tokenType))
+        {
+            throw Error(Peek(), errorMessage);
+        }
+    }
+
+    /// <summary>
     /// Switch to the next token and returns previous.
     /// </summary>
     /// <returns></returns>
@@ -239,7 +250,10 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
     /// <returns></returns>
     protected bool HasPrevious() => _current > 0;
     
-    private ParseException Error(Token<TTokenType> token, string message)
+    /// <summary>
+    /// Add error to the errors list and returns exception to raise. 
+    /// </summary>
+    protected ParseException Error(Token<TTokenType> token, string message)
     {
         _errors.Add(new ParseError<TTokenType>
         {
