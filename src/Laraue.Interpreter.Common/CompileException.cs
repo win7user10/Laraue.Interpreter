@@ -23,8 +23,13 @@ public class CompileException : Exception
     {
         var sb = new StringBuilder();
         
-        sb.AppendJoin(Environment.NewLine, errors.Select(e => e.Message));
+        sb.AppendJoin(Environment.NewLine, errors.Select(GetErrorMessage));
 
         return sb.ToString();
+    }
+
+    private static string GetErrorMessage(CompileError error)
+    {
+        return $"[{error.StartLineNumber}]:[{error.StartPosition}] {error.Message}";
     }
 }
