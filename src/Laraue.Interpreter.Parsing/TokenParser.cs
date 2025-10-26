@@ -199,17 +199,6 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
     protected Token<TTokenType> Peek() => tokens[_current];
 
     /// <summary>
-    /// Check that token is equal to the passed or throws.
-    /// </summary>
-    protected void Check(TTokenType? tokenType, string errorMessage)
-    {
-        if (!Check(tokenType))
-        {
-            throw Error(Peek(), errorMessage);
-        }
-    }
-
-    /// <summary>
     /// Switch to the next token and returns previous.
     /// </summary>
     /// <returns></returns>
