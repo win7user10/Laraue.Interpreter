@@ -30,6 +30,6 @@ public class CompileException : Exception
 
     private static string GetErrorMessage(CompileError error)
     {
-        return $"[{error.StartLineNumber}]:[{error.StartPosition}] {error.Message}";
+        return $"[{error.StartLineNumber}:{error.StartPosition}] {error.Message}";
     }
 }

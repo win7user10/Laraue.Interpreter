@@ -155,6 +155,20 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
     }
     
     /// <summary>
+    /// Check if the passed token repeats passed count times, and moves if yes.
+    /// </summary>
+    protected bool MatchSequential(TTokenType tokenType, int count)
+    {
+        if (CheckSequential(tokenType, count))
+        {
+            Advance(count);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /// <summary>
     /// Check if the passed token repeats passed count times.
     /// </summary>
     protected bool CheckSequential(TTokenType tokenType, int count)
@@ -168,6 +182,20 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
         }
 
         return true;
+    }
+    
+    /// <summary>
+    /// Check if the next tokens sequence is equal to the passed then consumes these tokens.
+    /// </summary>
+    protected bool MatchSequential(params TTokenType[] tokenTypes)
+    {
+        if (CheckSequential(tokenTypes))
+        {
+            Advance(tokenTypes.Length);
+            return true;
+        }
+        
+        return false;
     }
     
     /// <summary>
