@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Laraue.Interpreter.Parsing\Laraue.Interpreter.Parsing.csproj" />
+        <ProjectReference Include="..\Laraue.Interpreter.Scanning\Laraue.Interpreter.Scanning.csproj" />
+    </ItemGroup>
+
+</Project>

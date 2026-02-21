@@ -19,13 +19,34 @@ public abstract class TokenScanner<TTokenType>(string input) where TTokenType : 
     private int _lineNumber;
     private readonly List<Token<TTokenType>> _tokens = new ();
     private readonly List<ScanError> _errors = new ();
+    
+    protected abstract TTokenType NewLineTokenType { get; }
+    protected abstract bool AddNewLineTokens { get; }
 
     /// <summary>
     /// The main function to implement in scanner.
     /// It should either process character and return true or return false that mean the character is unprocessed.
     /// </summary>
     /// <returns></returns>
-    protected abstract bool TryProcessNextChar(char nextChar);
+    protected bool TryProcessNextChar(char nextChar)
+    {
+        switch (nextChar)
+        {
+            case '\r':
+                if (PopNextCharIf(c => c == '\n'))
+                {
+                    ToNextLine();
+                }
+                return true;
+            case '\n':
+                ToNextLine();
+                return true;
+            default:
+                return TryProcessNextCharInternal(nextChar);
+        }
+    }
+
+    protected abstract bool TryProcessNextCharInternal(char nextChar);
     
     /// <summary>
     /// Run the scanner and returns the scanning result.
@@ -78,6 +99,18 @@ public abstract class TokenScanner<TTokenType>(string input) where TTokenType : 
         
         return false;
     }
+
+    protected bool CheckSkipping(Func<char, bool> allowedChars, Func<char, bool> charsToSkip)
+    {
+        var offset = 0;
+        while (true)
+        {
+            if (!Check(offset, allowedChars))
+                return Check(offset, charsToSkip);
+            
+            offset++;
+        }
+    }
     
     /// <summary>
     /// Move the scanner to the next position and returns the token.
@@ -87,6 +120,16 @@ public abstract class TokenScanner<TTokenType>(string input) where TTokenType : 
     {
         _currentRelativePosition++;
         return Input[_currentAbsolutePosition++];
+    }
+
+    protected char Advance(int times)
+    {
+        var result = ' ';
+        
+        for (var i = 0; i < times; i++)
+            result = Advance();
+
+        return result;
     }
     
     /// <summary>
@@ -116,6 +159,9 @@ public abstract class TokenScanner<TTokenType>(string input) where TTokenType : 
     /// </summary>
     protected void ToNextLine()
     {
+        if (AddNewLineTokens)
+            AddToken(NewLineTokenType);
+        
         _lineNumber++;
         _currentRelativePosition = 0;
     }
@@ -162,9 +208,9 @@ public abstract class TokenScanner<TTokenType>(string input) where TTokenType : 
     /// Returns all characters that scanned in the current iteration. Usable for cases where token literal is required.
     /// </summary>
     /// <returns></returns>
-    protected string GetCurrentScanValue()
+    protected ReadOnlySpan<char> GetCurrentScanValue()
     {
-        return Input[_startAbsolutePosition.._currentAbsolutePosition];
+        return Input.AsSpan(_startAbsolutePosition.._currentAbsolutePosition);
     }
     
     private void ScanToken()

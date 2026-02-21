@@ -97,6 +97,16 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
 
         return EqualityComparer<TTokenType?>.Default.Equals(Peek().TokenType, exceptedTokenType);
     }
+    
+    /// <summary>
+    /// Returns true if any of passed tokens match the next token.
+    /// </summary>
+    /// <param name="exceptedTokenTypes"></param>
+    /// <returns></returns>
+    protected bool Check(params TTokenType?[] exceptedTokenTypes)
+    {
+        return exceptedTokenTypes.Any(Check);
+    }
 
     /// <summary>
     /// Returns true if the token with specified offset is equal to the passed.

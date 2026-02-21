@@ -8,6 +8,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Laraue.Interpreter.Parsing"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Laraue.Interpreter.Common", "src\Laraue.Interpreter.Common\Laraue.Interpreter.Common.csproj", "{66F78E2A-4E39-463D-BF71-AE3F1D011B88}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Laraue.Interpreter.Markdown", "src\Laraue.Interpreter.Markdown\Laraue.Interpreter.Markdown.csproj", "{092EC05E-5802-48D4-A655-4A07A1FE09DC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{5A3C4839-BCAD-4F1A-9B91-473A88DA686C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Laraue.Interpreter.Markdown.UnitTests", "tests\Laraue.Interpreter.Markdown.UnitTests\Laraue.Interpreter.Markdown.UnitTests.csproj", "{BEB203E7-89C8-4C00-BCBB-3A9637306B22}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,10 +32,20 @@ Global
 		{66F78E2A-4E39-463D-BF71-AE3F1D011B88}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{66F78E2A-4E39-463D-BF71-AE3F1D011B88}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{66F78E2A-4E39-463D-BF71-AE3F1D011B88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{092EC05E-5802-48D4-A655-4A07A1FE09DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{092EC05E-5802-48D4-A655-4A07A1FE09DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{092EC05E-5802-48D4-A655-4A07A1FE09DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{092EC05E-5802-48D4-A655-4A07A1FE09DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEB203E7-89C8-4C00-BCBB-3A9637306B22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEB203E7-89C8-4C00-BCBB-3A9637306B22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEB203E7-89C8-4C00-BCBB-3A9637306B22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEB203E7-89C8-4C00-BCBB-3A9637306B22}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{0A9FCB07-9065-468B-A8A5-7311B2F7D804} = {8F2615D0-74E3-4743-91BB-80DBA80AE464}
 		{42829880-C2F5-4A69-8469-73EF2FBD90FD} = {8F2615D0-74E3-4743-91BB-80DBA80AE464}
 		{66F78E2A-4E39-463D-BF71-AE3F1D011B88} = {8F2615D0-74E3-4743-91BB-80DBA80AE464}
+		{092EC05E-5802-48D4-A655-4A07A1FE09DC} = {8F2615D0-74E3-4743-91BB-80DBA80AE464}
+		{BEB203E7-89C8-4C00-BCBB-3A9637306B22} = {5A3C4839-BCAD-4F1A-9B91-473A88DA686C}
 	EndGlobalSection
 EndGlobal
