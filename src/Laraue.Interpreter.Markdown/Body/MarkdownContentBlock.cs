@@ -15,3 +15,9 @@ public class PlainMarkdownContentBlock : MarkdownContentBlock
 {
     public required MarkdownContentBlockElement[] Elements { get; init; }
 }
+
+public class CodeMarkdownContentBlock : MarkdownContentBlock
+{
+    public required MarkdownContentBlockElement[] Elements { get; init; }
+    public required string? Language { get; init; }
+}

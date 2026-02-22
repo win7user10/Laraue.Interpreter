@@ -33,8 +33,10 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
             return ReadHeading();
         if (Check(MarkdownTokenType.Word))
             return ReadPlain();
+        if (MatchSequential(MarkdownTokenType.Backtick, 3))
+            return ReadCode();
 
-        throw Error(Peek(), "Unexpected token.");
+        throw new NotImplementedException(Peek().TokenType.ToString());
     }
 
     private HeadingMarkdownContentBlock ReadHeading()
@@ -57,6 +59,38 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
         return new PlainMarkdownContentBlock
         {
             Elements = elements,
+        };
+    }
+    
+    private CodeMarkdownContentBlock ReadCode()
+    {
+        var result = new List<MarkdownContentBlockElement>();
+        
+        string? language = null;
+        if (Match(MarkdownTokenType.Word))
+            language = Previous().Literal?.ToString();
+        
+        // Whitespaces after the block declaration doesn't matter
+        Skip(MarkdownTokenType.NewLine);
+        Skip(MarkdownTokenType.Whitespace);
+
+        var lastNonEmptyTokenNumber = 0;
+        
+        while (!IsParseCompleted && !MatchSequential(MarkdownTokenType.Backtick, 3))
+        {
+            var consumed = Peek();
+            
+            var element = ReadElement();
+            result.Add(element);
+
+            if (consumed.TokenType is not MarkdownTokenType.NewLine and not MarkdownTokenType.Whitespace)
+                lastNonEmptyTokenNumber = result.Count;
+        }
+
+        return new CodeMarkdownContentBlock
+        {
+            Elements = result.Take(lastNonEmptyTokenNumber).ToArray(),
+            Language = language
         };
     }
 

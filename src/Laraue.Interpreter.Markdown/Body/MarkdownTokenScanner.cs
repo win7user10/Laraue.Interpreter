@@ -6,7 +6,7 @@ public class MarkdownTokenScanner(string input)
     : TokenScanner<MarkdownTokenType>(input)
 {
     protected override MarkdownTokenType NewLineTokenType => MarkdownTokenType.NewLine;
-    protected override bool AddNewLineTokens => false;
+    protected override bool AddNewLineTokens => true;
     protected override bool TryProcessNextCharInternal(char nextChar)
     {
         switch (nextChar)

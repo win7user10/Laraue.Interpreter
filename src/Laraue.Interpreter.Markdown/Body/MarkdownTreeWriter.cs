@@ -4,6 +4,12 @@ namespace Laraue.Interpreter.Markdown.Body;
 
 public class MarkdownTreeWriter
 {
+    private static readonly Dictionary<char, string> EscapedChars = new()
+    {
+        ['<'] = "&lt;",
+        ['>'] = "&gt;",
+    };
+    
     public string Write(MarkdownTree tree)
     {
         var sb = new StringBuilder();
@@ -21,6 +27,9 @@ public class MarkdownTreeWriter
             case PlainMarkdownContentBlock plainBlock:
                 Write(sb, plainBlock);
                 break;
+            case CodeMarkdownContentBlock codeBlock:
+                Write(sb, codeBlock);
+                break;
             default:
                 throw new NotImplementedException();
         }
@@ -28,12 +37,25 @@ public class MarkdownTreeWriter
     
     private void Write(StringBuilder sb, PlainMarkdownContentBlock contentBlock)
     {
-        sb.Append("<p>");
+        WriteElements(sb, "p", contentBlock.Elements);
+    }
+    
+    private void Write(StringBuilder sb, CodeMarkdownContentBlock codeBlock)
+    {
+        sb.Append("<pre><code");
         
-        foreach (var element in contentBlock.Elements)
-            Write(sb, element);
+        if (codeBlock.Language != null)
+            sb
+                .Append(" class=\"")
+                .Append(codeBlock.Language)
+                .Append('\"');
 
-        sb.Append("</p>");
+        sb.Append('>');
+        
+        foreach (var innerElement in codeBlock.Elements)
+            Write(sb, innerElement);
+
+        sb.Append("</code></pre>");
     }
     
     private void Write(StringBuilder sb, MarkdownContentBlockElement contentBlockElement)
@@ -57,9 +79,15 @@ public class MarkdownTreeWriter
         }
     }
     
-    private void Write(StringBuilder sb, PlainMarkdownContentBlockElement plaintElement)
+    private void Write(StringBuilder sb, PlainMarkdownContentBlockElement plainElement)
     {
-        sb.Append(plaintElement.Content);
+        foreach (var ch in plainElement.Content)
+        {
+            if (EscapedChars.TryGetValue(ch, out var escapedChar))
+                sb.Append(escapedChar);
+            else
+                sb.Append(ch);
+        }
     }
     
     private void Write(StringBuilder sb, ItalicMarkdownContentBlockElement italicElement)
