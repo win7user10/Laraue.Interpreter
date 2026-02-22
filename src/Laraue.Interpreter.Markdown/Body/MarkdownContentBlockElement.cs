@@ -4,7 +4,7 @@ public abstract class MarkdownContentBlockElement
 {
 }
 
-public class BoldMarkdownContentBlockElement : MarkdownContentBlockElement
+public class ItalicMarkdownContentBlockElement : MarkdownContentBlockElement
 {
     public required MarkdownContentBlockElement[] InnerElements { get; init; }
 }

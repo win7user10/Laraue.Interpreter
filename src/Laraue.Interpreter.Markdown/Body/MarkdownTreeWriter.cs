@@ -43,6 +43,9 @@ public class MarkdownTreeWriter
             case PlainMarkdownContentBlockElement plainBlockElement:
                 Write(sb, plainBlockElement);
                 break;
+            case ItalicMarkdownContentBlockElement boldBlockElement:
+                Write(sb, boldBlockElement);
+                break;
             default:
                 throw new NotImplementedException();
         }
@@ -51,5 +54,16 @@ public class MarkdownTreeWriter
     private void Write(StringBuilder sb, PlainMarkdownContentBlockElement plaintElement)
     {
         sb.Append(plaintElement.Content);
+    }
+    
+    
+    private void Write(StringBuilder sb, ItalicMarkdownContentBlockElement italicElement)
+    {
+        sb.Append("<em>");
+        
+        foreach (var innerElement in italicElement.InnerElements)
+            Write(sb, innerElement);
+
+        sb.Append("</em>");
     }
 }

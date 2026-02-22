@@ -94,8 +94,23 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
         };
     }
     
-    private BoldMarkdownContentBlockElement ReadAsteriskElement()
+    private ItalicMarkdownContentBlockElement ReadAsteriskElement()
     {
-        throw new NotImplementedException();
+        var elements = new List<MarkdownContentBlockElement>();
+        while (!IsRowEndReached() && !Match(MarkdownTokenType.Asterisk))
+        {
+            var next = ReadElement();
+            elements.Add(next);
+        }
+
+        return new ItalicMarkdownContentBlockElement
+        {
+            InnerElements = elements.ToArray()
+        };
+    }
+
+    private bool IsRowEndReached()
+    {
+        return IsParseCompleted || Check(MarkdownTokenType.NewLine);
     }
 }
