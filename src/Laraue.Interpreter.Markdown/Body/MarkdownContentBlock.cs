@@ -1,0 +1,17 @@
+﻿namespace Laraue.Interpreter.Markdown.Body;
+
+public abstract class MarkdownContentBlock
+{
+}
+
+public class HeadingMarkdownContentBlock : MarkdownContentBlock
+{
+    public required int Level { get; init; }
+    
+    public required MarkdownContentBlockElement[] Elements { get; init; }
+}
+
+public class PlainMarkdownContentBlock : MarkdownContentBlock
+{
+    public required MarkdownContentBlockElement[] Elements { get; init; }
+}

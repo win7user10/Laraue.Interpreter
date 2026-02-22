@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Laraue.Interpreter.Parsing;
+﻿using Laraue.Interpreter.Parsing;
 using Laraue.Interpreter.Scanning;
 
 namespace Laraue.Interpreter.Markdown.Meta;

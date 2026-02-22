@@ -2,7 +2,7 @@
 
 namespace Laraue.Interpreter.Markdown.UnitTests;
 
-public class MdTokenScannerTests
+public class MarkdownMetaTokenParserTests
 {
     [Fact]
     public void MarkdownMetaTokenParser_ShouldParseTree_WhenFormattingIsNormal()
@@ -92,7 +92,7 @@ type: unitTestArticle
         Assert.Equal(value, header.Value);
     }
 
-    private MarkdownMetaTree Parse(string markdown)
+    private static MarkdownMetaTree Parse(string markdown)
     {
         var scanner = new MarkdownMetaTokenScanner(markdown);
         var scanResult = scanner.ScanTokens();
