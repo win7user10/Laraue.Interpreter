@@ -1,4 +1,5 @@
-﻿using Laraue.Interpreter.Parsing;
+﻿using System.Text;
+using Laraue.Interpreter.Parsing;
 using Laraue.Interpreter.Scanning;
 
 namespace Laraue.Interpreter.Markdown.Body;
@@ -68,6 +69,7 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
             if (!CheckSkipping(MarkdownTokenType.Word, MarkdownTokenType.Whitespace))
                 break;
             
+            // Connect the parts of paragraphs
             result.Add(new PlainMarkdownContentBlockElement
             {
                 Content = " "
@@ -144,6 +146,9 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
         
         if (Match(MarkdownTokenType.Backtick))
             return ReadBacktickElement();
+        
+        if (Match(MarkdownTokenType.LeftSquareBracket))
+            return ReadLink();
 
         return ReadPlainElement();
     }
@@ -212,6 +217,35 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
         return new InlineCodeMarkdownContentBlockElement
         {
             InnerElements = elements.ToArray()
+        };
+    }
+    
+    private LinkCodeMarkdownContentBlockElement ReadLink()
+    {
+        var linkContentBuilder = new StringBuilder();
+        while (!IsRowEndReached() && !Match(MarkdownTokenType.RightSquareBracket))
+        {
+            var next = ReadPlainElement();
+            linkContentBuilder.Append(next.Content);
+        }
+
+        string? href = null;
+        if (Match(MarkdownTokenType.LeftParenthesis))
+        {
+            var hrefBuilder = new StringBuilder();
+            while (!IsRowEndReached() && !Match(MarkdownTokenType.RightParenthesis))
+            {
+                var next = ReadPlainElement();
+                hrefBuilder.Append(next.Content);
+            }
+            
+            href = hrefBuilder.ToString();
+        }
+
+        return new LinkCodeMarkdownContentBlockElement
+        {
+            Title = linkContentBuilder.ToString(),
+            Href = href,
         };
     }
 

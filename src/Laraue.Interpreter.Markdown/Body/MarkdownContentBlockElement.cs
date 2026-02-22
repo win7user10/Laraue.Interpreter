@@ -23,3 +23,9 @@ public class PlainMarkdownContentBlockElement : MarkdownContentBlockElement
 {
     public required string Content { get; init; }
 }
+
+public class LinkCodeMarkdownContentBlockElement : MarkdownContentBlockElement
+{
+    public required string? Href { get; init; }
+    public required string Title { get; init; }
+}

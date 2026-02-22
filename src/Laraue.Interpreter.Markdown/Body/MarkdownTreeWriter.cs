@@ -74,6 +74,9 @@ public class MarkdownTreeWriter
             case InlineCodeMarkdownContentBlockElement codeBlockElement:
                 Write(sb, codeBlockElement);
                 break;
+            case LinkCodeMarkdownContentBlockElement linkElement:
+                Write(sb, linkElement);
+                break;
             default:
                 throw new NotImplementedException();
         }
@@ -103,6 +106,20 @@ public class MarkdownTreeWriter
     private void Write(StringBuilder sb, InlineCodeMarkdownContentBlockElement codeElement)
     {
         WriteElements(sb, "code", codeElement.InnerElements);
+    }
+    
+    private void Write(StringBuilder sb, LinkCodeMarkdownContentBlockElement linkElement)
+    {
+        sb.Append("<a");
+        
+        if (linkElement.Href != null)
+            sb.Append(" href=\"")
+                .Append(linkElement.Href)
+                .Append('"');
+        
+        sb.Append('>')
+            .Append(linkElement.Title)
+            .Append("</a>");
     }
     
     private void WriteElements(
