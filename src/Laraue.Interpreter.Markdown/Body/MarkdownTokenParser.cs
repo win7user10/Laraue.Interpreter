@@ -79,7 +79,10 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
     private MarkdownContentBlockElement ReadElement()
     {
         if (Match(MarkdownTokenType.Asterisk))
-            return ReadAsteriskElement();
+            return ReadItalicElement(MarkdownTokenType.Asterisk);
+        
+        if (Match(MarkdownTokenType.Underscore))
+            return ReadItalicElement(MarkdownTokenType.Underscore);
 
         return ReadPlainElement();
     }
@@ -94,10 +97,10 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
         };
     }
     
-    private ItalicMarkdownContentBlockElement ReadAsteriskElement()
+    private ItalicMarkdownContentBlockElement ReadItalicElement(MarkdownTokenType tokenType)
     {
         var elements = new List<MarkdownContentBlockElement>();
-        while (!IsRowEndReached() && !Match(MarkdownTokenType.Asterisk))
+        while (!IsRowEndReached() && !Match(tokenType))
         {
             var next = ReadElement();
             elements.Add(next);

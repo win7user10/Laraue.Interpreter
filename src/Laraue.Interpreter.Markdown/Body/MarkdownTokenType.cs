@@ -45,4 +45,9 @@ public enum MarkdownTokenType
     /// '-'
     /// </summary>
     MinusSign,
+    
+    /// <summary>
+    /// '_'
+    /// </summary>
+    Underscore,
 }

@@ -29,6 +29,9 @@ public class MarkdownTokenScanner(string input)
             case '-':
                 AddToken(MarkdownTokenType.MinusSign);
                 return true;
+            case '_':
+                AddToken(MarkdownTokenType.Underscore);
+                return true;
             case '[':
                 AddToken(MarkdownTokenType.LeftSquareBracket);
                 return true;
