@@ -83,6 +83,9 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
         
         if (Match(MarkdownTokenType.Underscore))
             return ReadItalicOrBoldElement(MarkdownTokenType.Underscore);
+        
+        if (Match(MarkdownTokenType.Backtick))
+            return ReadBacktickElement();
 
         return ReadPlainElement();
     }
@@ -134,6 +137,21 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
         }
 
         return new BoldMarkdownContentBlockElement
+        {
+            InnerElements = elements.ToArray()
+        };
+    }
+    
+    private InlineCodeMarkdownContentBlockElement ReadBacktickElement()
+    {
+        var elements = new List<MarkdownContentBlockElement>();
+        while (!IsRowEndReached() && !Match(MarkdownTokenType.Backtick))
+        {
+            var next = ReadPlainElement();
+            elements.Add(next);
+        }
+
+        return new InlineCodeMarkdownContentBlockElement
         {
             InnerElements = elements.ToArray()
         };

@@ -49,6 +49,9 @@ public class MarkdownTreeWriter
             case BoldMarkdownContentBlockElement boldBlockElement:
                 Write(sb, boldBlockElement);
                 break;
+            case InlineCodeMarkdownContentBlockElement codeBlockElement:
+                Write(sb, codeBlockElement);
+                break;
             default:
                 throw new NotImplementedException();
         }
@@ -61,21 +64,29 @@ public class MarkdownTreeWriter
     
     private void Write(StringBuilder sb, ItalicMarkdownContentBlockElement italicElement)
     {
-        sb.Append("<em>");
-        
-        foreach (var innerElement in italicElement.InnerElements)
-            Write(sb, innerElement);
-
-        sb.Append("</em>");
+        WriteElements(sb, "em", italicElement.InnerElements);
     }
     
     private void Write(StringBuilder sb, BoldMarkdownContentBlockElement italicElement)
     {
-        sb.Append("<b>");
+        WriteElements(sb, "b", italicElement.InnerElements);
+    }
+    
+    private void Write(StringBuilder sb, InlineCodeMarkdownContentBlockElement codeElement)
+    {
+        WriteElements(sb, "code", codeElement.InnerElements);
+    }
+    
+    private void WriteElements(
+        StringBuilder sb,
+        string wrappingTag,
+        MarkdownContentBlockElement[] elements)
+    {
+        sb.Append($"<{wrappingTag}>");
         
-        foreach (var innerElement in italicElement.InnerElements)
+        foreach (var innerElement in elements)
             Write(sb, innerElement);
 
-        sb.Append("</b>");
+        sb.Append($"</{wrappingTag}>");
     }
 }
