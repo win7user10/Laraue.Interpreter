@@ -55,10 +55,28 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
     
     private PlainMarkdownContentBlock ReadPlain()
     {
-        var elements = ReadRowElements();
+        var result = new List<MarkdownContentBlockElement>();
+
+        while (true)
+        {
+            result.AddRange(ReadRowElements());
+            
+            // Skip new line
+            Advance();
+            
+            // If after new line the word is appearing, it is the same paragraph
+            if (!CheckSkipping(MarkdownTokenType.Word, MarkdownTokenType.Whitespace))
+                break;
+            
+            result.Add(new PlainMarkdownContentBlockElement
+            {
+                Content = " "
+            });
+        }
+
         return new PlainMarkdownContentBlock
         {
-            Elements = elements,
+            Elements = result.ToArray()
         };
     }
     
@@ -101,13 +119,19 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
         // Whitespaces while reading row doesn't matter.
         Skip(MarkdownTokenType.Whitespace);
         
+        var lastNonEmptyTokenNumber = 0;
         while (!IsParseCompleted && !Check(MarkdownTokenType.NewLine))
         {
+            var consumed = Peek();
+            
             var element = ReadElement();
             result.Add(element);
+            
+            if (consumed.TokenType is not MarkdownTokenType.NewLine and not MarkdownTokenType.Whitespace)
+                lastNonEmptyTokenNumber = result.Count;
         }
         
-        return result.ToArray();
+        return result.Take(lastNonEmptyTokenNumber).ToArray();
     }
     
     private MarkdownContentBlockElement ReadElement()
