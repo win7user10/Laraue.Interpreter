@@ -79,10 +79,10 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
     private MarkdownContentBlockElement ReadElement()
     {
         if (Match(MarkdownTokenType.Asterisk))
-            return ReadItalicElement(MarkdownTokenType.Asterisk);
+            return ReadItalicOrBoldElement(MarkdownTokenType.Asterisk);
         
         if (Match(MarkdownTokenType.Underscore))
-            return ReadItalicElement(MarkdownTokenType.Underscore);
+            return ReadItalicOrBoldElement(MarkdownTokenType.Underscore);
 
         return ReadPlainElement();
     }
@@ -97,8 +97,13 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
         };
     }
     
-    private ItalicMarkdownContentBlockElement ReadItalicElement(MarkdownTokenType tokenType)
+    private MarkdownContentBlockElement ReadItalicOrBoldElement(MarkdownTokenType tokenType)
     {
+        // If the element is written twice - it is the "bold" case
+        if (Match(tokenType))
+            return ReadBoldElement(tokenType);
+        
+        // Otherwise - it is "italic" case
         var elements = new List<MarkdownContentBlockElement>();
         while (!IsRowEndReached() && !Match(tokenType))
         {
@@ -107,6 +112,28 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
         }
 
         return new ItalicMarkdownContentBlockElement
+        {
+            InnerElements = elements.ToArray()
+        };
+    }
+
+    private BoldMarkdownContentBlockElement ReadBoldElement(
+        MarkdownTokenType tokenType)
+    {
+        var elements = new List<MarkdownContentBlockElement>();
+        while (!IsRowEndReached())
+        {
+            if (CheckSequential(tokenType, tokenType))
+            {
+                Advance(2);
+                break;
+            }
+            
+            var next = ReadElement();
+            elements.Add(next);
+        }
+
+        return new BoldMarkdownContentBlockElement
         {
             InnerElements = elements.ToArray()
         };
