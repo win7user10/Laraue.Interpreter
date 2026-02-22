@@ -29,9 +29,9 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
 
     private MarkdownContentBlock ReadNextBlock()
     {
-        if (Match(MarkdownTokenType.NumberSign))
+        if (Check(MarkdownTokenType.NumberSign))
             return ReadHeading();
-        if (Match(MarkdownTokenType.Word))
+        if (Check(MarkdownTokenType.Word))
             return ReadPlain();
 
         throw Error(Peek(), "Unexpected token.");
@@ -39,7 +39,7 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
 
     private HeadingMarkdownContentBlock ReadHeading()
     {
-        var headingLevel = 1;
+        var headingLevel = 0;
         while (Match(MarkdownTokenType.NumberSign))
             headingLevel++;
 

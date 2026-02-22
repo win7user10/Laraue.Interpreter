@@ -1,9 +1,55 @@
-﻿namespace Laraue.Interpreter.Markdown.Body;
+﻿using System.Text;
+
+namespace Laraue.Interpreter.Markdown.Body;
 
 public class MarkdownTreeWriter
 {
     public string Write(MarkdownTree tree)
     {
-        throw new NotImplementedException();
+        var sb = new StringBuilder();
+        
+        foreach (var contentBlock in tree.ContentBlocks)
+            Write(sb, contentBlock);
+
+        return sb.ToString();
+    }
+
+    private void Write(StringBuilder sb, MarkdownContentBlock contentBlock)
+    {
+        switch (contentBlock)
+        {
+            case PlainMarkdownContentBlock plainBlock:
+                Write(sb, plainBlock);
+                break;
+            default:
+                throw new NotImplementedException();
+        }
+    }
+    
+    private void Write(StringBuilder sb, PlainMarkdownContentBlock contentBlock)
+    {
+        sb.Append("<p>");
+        
+        foreach (var element in contentBlock.Elements)
+            Write(sb, element);
+
+        sb.Append("</p>");
+    }
+    
+    private void Write(StringBuilder sb, MarkdownContentBlockElement contentBlockElement)
+    {
+        switch (contentBlockElement)
+        {
+            case PlainMarkdownContentBlockElement plainBlockElement:
+                Write(sb, plainBlockElement);
+                break;
+            default:
+                throw new NotImplementedException();
+        }
+    }
+    
+    private void Write(StringBuilder sb, PlainMarkdownContentBlockElement plaintElement)
+    {
+        sb.Append(plaintElement.Content);
     }
 }
