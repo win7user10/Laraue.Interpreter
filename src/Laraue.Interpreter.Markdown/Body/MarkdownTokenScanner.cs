@@ -41,6 +41,12 @@ public class MarkdownTokenScanner(string input)
             case ' ':
                 AddToken(MarkdownTokenType.Whitespace);
                 return true;
+            case '!':
+                AddToken(MarkdownTokenType.Not);
+                return true;
+            case '"':
+                AddToken(MarkdownTokenType.Quote);
+                return true;
             default:
                 AddWordOrNumber();
                 return true;

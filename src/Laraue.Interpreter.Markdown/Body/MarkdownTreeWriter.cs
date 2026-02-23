@@ -30,8 +30,11 @@ public class MarkdownTreeWriter
             case CodeMarkdownContentBlock codeBlock:
                 Write(sb, codeBlock);
                 break;
+            case HeadingMarkdownContentBlock headingBlock:
+                Write(sb, headingBlock);
+                break;
             default:
-                throw new NotImplementedException();
+                throw new NotImplementedException(contentBlock.GetType().Name);
         }
     }
     
@@ -58,6 +61,11 @@ public class MarkdownTreeWriter
         sb.Append("</code></pre>");
     }
     
+    private void Write(StringBuilder sb, HeadingMarkdownContentBlock headingBlock)
+    {
+        WriteElements(sb, $"h{headingBlock.Level}", headingBlock.Elements);
+    }
+    
     private void Write(StringBuilder sb, MarkdownContentBlockElement contentBlockElement)
     {
         switch (contentBlockElement)
@@ -76,6 +84,9 @@ public class MarkdownTreeWriter
                 break;
             case LinkCodeMarkdownContentBlockElement linkElement:
                 Write(sb, linkElement);
+                break;
+            case ImageCodeMarkdownContentBlockElement imageElement:
+                Write(sb, imageElement);
                 break;
             default:
                 throw new NotImplementedException();
@@ -112,14 +123,33 @@ public class MarkdownTreeWriter
     {
         sb.Append("<a");
         
-        if (linkElement.Href != null)
-            sb.Append(" href=\"")
-                .Append(linkElement.Href)
-                .Append('"');
+        WriteAttribute(sb, "href", linkElement.Href);
         
         sb.Append('>')
             .Append(linkElement.Title)
             .Append("</a>");
+    }
+    
+    private void Write(StringBuilder sb, ImageCodeMarkdownContentBlockElement imageElement)
+    {
+        sb.Append("<img");
+        
+        WriteAttribute(sb, "src", imageElement.Src);
+        WriteAttribute(sb, "title", imageElement.Title);
+        WriteAttribute(sb, "alt", imageElement.Alt);
+        
+        sb.Append(" />");
+    }
+
+    private void WriteAttribute(
+        StringBuilder sb,
+        string attributeName,
+        string? attributeValue)
+    {
+        if (attributeValue != null)
+            sb.Append($" {attributeName}=\"")
+                .Append(attributeValue)
+                .Append('"');
     }
     
     private void WriteElements(

@@ -32,12 +32,9 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
     {
         if (Check(MarkdownTokenType.NumberSign))
             return ReadHeading();
-        if (Check(MarkdownTokenType.Word))
-            return ReadPlain();
         if (MatchSequential(MarkdownTokenType.Backtick, 3))
             return ReadCode();
-
-        throw new NotImplementedException(Peek().TokenType.ToString());
+        return ReadPlain();
     }
 
     private HeadingMarkdownContentBlock ReadHeading()
@@ -149,6 +146,9 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
         
         if (Match(MarkdownTokenType.LeftSquareBracket))
             return ReadLink();
+        
+        if (Match(MarkdownTokenType.Not))
+            return ReadImage();
 
         return ReadPlainElement();
     }
@@ -246,6 +246,52 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
         {
             Title = linkContentBuilder.ToString(),
             Href = href,
+        };
+    }
+    
+    private MarkdownContentBlockElement ReadImage()
+    {
+        var altBuilder = new StringBuilder();
+        if (Match(MarkdownTokenType.LeftSquareBracket))
+        {
+            while (!IsRowEndReached() && !Match(MarkdownTokenType.RightSquareBracket))
+            {
+                var next = ReadPlainElement();
+                altBuilder.Append(next.Content);
+            }
+        }
+
+        var srcBuilder = new StringBuilder();
+        var titleBuilder = new StringBuilder();
+        
+        if (Match(MarkdownTokenType.LeftParenthesis))
+        {
+            while (!IsRowEndReached())
+            {
+                if (Match(MarkdownTokenType.RightParenthesis))
+                    break;
+
+                if (Match(MarkdownTokenType.Quote))
+                {
+                    while (!IsRowEndReached() && !Match(MarkdownTokenType.Quote))
+                    {
+                        var titlePart = ReadPlainElement();
+                        titleBuilder.Append(titlePart.Content);
+                    }
+                    
+                    break;
+                }
+                
+                var srcPart = ReadPlainElement();
+                srcBuilder.Append(srcPart.Content);
+            }
+        }
+
+        return new ImageCodeMarkdownContentBlockElement
+        {
+            Title = titleBuilder.Length > 0 ? titleBuilder.ToString() : null,
+            Src = srcBuilder.Length > 0 ? srcBuilder.ToString() : null,
+            Alt = altBuilder.Length > 0 ? altBuilder.ToString() : null,
         };
     }
 

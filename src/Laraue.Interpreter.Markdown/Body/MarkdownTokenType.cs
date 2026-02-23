@@ -50,4 +50,14 @@ public enum MarkdownTokenType
     /// '_'
     /// </summary>
     Underscore,
+    
+    /// <summary>
+    /// '!'
+    /// </summary>
+    Not,
+    
+    /// <summary>
+    /// '"'
+    /// </summary>
+    Quote,
 }

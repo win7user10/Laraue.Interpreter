@@ -198,7 +198,7 @@ inside text";
         var contentText = @"![mountain](mountain.jpg)
 ## Next title";
 
-        Assert.Equal("<p><img src=\"mountain.jpg\" title=\"\" alt=\"mountain\" /></p><h2 id=\"next-title\">Next title</h2>", ToHtml(contentText));
+        Assert.Equal("<p><img src=\"mountain.jpg\" alt=\"mountain\" /></p><h2 id=\"next-title\">Next title</h2>", ToHtml(contentText));
     }
 
     private static string ToHtml(string markdown)
