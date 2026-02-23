@@ -13,7 +13,7 @@ public class HeadingMarkdownContentBlock : MarkdownContentBlock
 
 public class PlainMarkdownContentBlock : MarkdownContentBlock
 {
-    public required MarkdownContentBlockElement[] Elements { get; init; }
+    public required MarkdownContentBlockElement[] Elements { get; set; }
 }
 
 public class CodeMarkdownContentBlock : MarkdownContentBlock

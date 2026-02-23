@@ -24,8 +24,56 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
 
         return new MarkdownTree
         {
-            ContentBlocks = contentBlocks.ToArray(),
+            ContentBlocks = PostProcessBlocks(contentBlocks),
         };
+    }
+
+    private static MarkdownContentBlock[] PostProcessBlocks(
+        List<MarkdownContentBlock> blocks)
+    {
+        // Merge the parts of md file in one line
+        var result = new List<MarkdownContentBlock>();
+        
+        MarkdownContentBlock? previous = null;
+        var blocksIterator = blocks.GetEnumerator();
+        
+        while (blocksIterator.MoveNext())
+        {
+            if (previous is not PlainMarkdownContentBlock plainMarkdownContentBlock)
+            {
+                previous = blocksIterator.Current;
+                result.Add(previous);
+                continue;
+            }
+
+            var mergedElements = new List<MarkdownContentBlockElement>(plainMarkdownContentBlock.Elements);
+            
+            do
+            {
+                var current = blocksIterator.Current;
+                if (current is PlainMarkdownContentBlock currentPlainBlock)
+                {
+                    mergedElements.Add(new PlainMarkdownContentBlockElement
+                    {
+                        Content = " "
+                    });
+                    
+                    mergedElements.AddRange(currentPlainBlock.Elements);
+                    if (!blocksIterator.MoveNext())
+                        break;
+                }
+                else
+                    break;
+
+            } while (true);
+
+            if (mergedElements.Count > 0)
+            {
+                plainMarkdownContentBlock.Elements = mergedElements.ToArray();
+            }
+        }
+
+        return result.ToArray();
     }
 
     private MarkdownContentBlock ReadNextBlock()
@@ -53,29 +101,9 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
     
     private PlainMarkdownContentBlock ReadPlain()
     {
-        var result = new List<MarkdownContentBlockElement>();
-
-        while (true)
-        {
-            result.AddRange(ReadRowElements());
-            
-            // Skip new line
-            Advance();
-            
-            // If after new line the word is appearing, it is the same paragraph
-            if (!CheckSkipping(MarkdownTokenType.Word, MarkdownTokenType.Whitespace))
-                break;
-            
-            // Connect the parts of paragraphs
-            result.Add(new PlainMarkdownContentBlockElement
-            {
-                Content = " "
-            });
-        }
-
         return new PlainMarkdownContentBlock
         {
-            Elements = result.ToArray()
+            Elements = ReadRowElements(),
         };
     }
     
@@ -260,17 +288,24 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
                 altBuilder.Append(next.Content);
             }
         }
+        
+        Skip(MarkdownTokenType.Whitespace);
 
         var srcBuilder = new StringBuilder();
         var titleBuilder = new StringBuilder();
         
         if (Match(MarkdownTokenType.LeftParenthesis))
         {
+            // Start reading the src
             while (!IsRowEndReached())
             {
+                Skip(MarkdownTokenType.Whitespace);
+
+                // The link definition is finished
                 if (Match(MarkdownTokenType.RightParenthesis))
                     break;
 
+                // Title definition started
                 if (Match(MarkdownTokenType.Quote))
                 {
                     while (!IsRowEndReached() && !Match(MarkdownTokenType.Quote))
@@ -279,7 +314,7 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
                         titleBuilder.Append(titlePart.Content);
                     }
                     
-                    break;
+                    continue;
                 }
                 
                 var srcPart = ReadPlainElement();

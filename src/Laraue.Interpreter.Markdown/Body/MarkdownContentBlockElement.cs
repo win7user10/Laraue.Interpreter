@@ -21,7 +21,7 @@ public class InlineCodeMarkdownContentBlockElement : MarkdownContentBlockElement
 
 public class PlainMarkdownContentBlockElement : MarkdownContentBlockElement
 {
-    public required string Content { get; init; }
+    public required string Content { get; set; }
 }
 
 public class LinkCodeMarkdownContentBlockElement : MarkdownContentBlockElement

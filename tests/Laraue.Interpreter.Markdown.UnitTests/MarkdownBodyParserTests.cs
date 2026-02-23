@@ -181,7 +181,7 @@ inside text";
         var contentText = @"![Big mountain](/assets/mountain.jpg ""Everest"")
 ![Small mountain](/assets/mini-mountain.jpg ""Elbrus"")";
 
-        Assert.Equal("<p><img src=\"/assets/mountain.jpg\" title=\"Everest\" alt=\"Big mountain\" /><img src=\"/assets/mini-mountain.jpg\" title=\"Elbrus\" alt=\"Small mountain\" /></p>", ToHtml(contentText));
+        Assert.Equal("<p><img src=\"/assets/mountain.jpg\" title=\"Everest\" alt=\"Big mountain\" /> <img src=\"/assets/mini-mountain.jpg\" title=\"Elbrus\" alt=\"Small mountain\" /></p>", ToHtml(contentText));
     }
     
     [Fact]
