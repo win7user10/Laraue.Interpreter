@@ -13,34 +13,56 @@ public class MarkdownMetaTokenScanner(string input)
 
     protected override bool TryProcessNextCharInternal(char nextChar)
     {
-        if (_metaFinished)
-        {
-            ReadContent();
-            return true;
-        }
-        
         switch (nextChar)
         {
             case ' ':
                 return true;
+            default:
+                HandleNonWhitespaceChar(nextChar);
+                return true;
+        }
+    }
+
+    private void HandleNonWhitespaceChar(char nextChar)
+    {
+        // Try read metadata
+        if (nextChar == '-')
+        {
+            ReadMetaDelimiter();
+            return;
+        }
+        
+        // If any char consumed but the meta is not started, there is no metadata in file
+        if (!_metaStarted)
+        {
+            ReadContent();
+            return;
+        }
+        
+        // If meta is finished just read the whole content remained
+        if (_metaFinished)
+        {
+            ReadContent();
+            return;
+        }
+        
+        switch (nextChar)
+        {
             case ':':
                 AddToken(MarkdownMetaTokenType.Delimiter);
-                return true;
+                return;
             case '[':
                 AddToken(MarkdownMetaTokenType.ArrayStart);
-                return true;
+                return;
             case ']':
                 AddToken(MarkdownMetaTokenType.ArrayEnd);
-                return true;
+                return;
             case ',':
                 AddToken(MarkdownMetaTokenType.Comma);
-                return true;
-            case '-':
-                ReadMetaDelimiter();
-                return true;
+                return;
             default:
                 AddWordOrNumber();
-                return true;
+                return;
         }
     }
 

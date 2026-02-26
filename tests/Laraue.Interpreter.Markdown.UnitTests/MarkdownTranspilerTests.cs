@@ -57,4 +57,15 @@ Hi, _Italic_ __bold__ `font`  next string;
         
         // TODO - html tests
     }
+    
+    [Fact]
+    public void Transpile_ShouldReturnContent_WhenHeadersNotExist()
+    {
+        const string markdownFile = "Only content";
+
+        var result = MarkdownTranspiler.ToHtml(markdownFile);
+        
+        Assert.Empty(result.Headers);
+        Assert.Equal("<p>Only content</p>", result.HtmlContent);
+    }
 }
