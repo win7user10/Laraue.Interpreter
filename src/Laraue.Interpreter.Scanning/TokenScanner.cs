@@ -34,9 +34,7 @@ public abstract class TokenScanner<TTokenType>(string input) where TTokenType : 
         {
             case '\r':
                 if (PopNextCharIf(c => c == '\n'))
-                {
                     ToNextLine();
-                }
                 return true;
             case '\n':
                 ToNextLine();

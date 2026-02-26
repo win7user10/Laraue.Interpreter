@@ -1,4 +1,6 @@
-﻿namespace Laraue.Interpreter.Markdown.Body;
+﻿using Laraue.Interpreter.Markdown.Body.Blocks;
+
+namespace Laraue.Interpreter.Markdown.Body;
 
 public class MarkdownTree
 {

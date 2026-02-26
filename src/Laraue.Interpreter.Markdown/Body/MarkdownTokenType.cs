@@ -5,6 +5,7 @@ public enum MarkdownTokenType
     NewLine,
     Whitespace,
     Word,
+    Number,
     
     /// <summary>
     /// '*'
@@ -60,4 +61,14 @@ public enum MarkdownTokenType
     /// '"'
     /// </summary>
     Quote,
+    
+    /// <summary>
+    /// '"'
+    /// </summary>
+    Pipe,
+    
+    /// <summary>
+    /// "."
+    /// </summary>
+    Dot,
 }

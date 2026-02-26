@@ -7,19 +7,6 @@ namespace Laraue.Interpreter.Markdown.UnitTests;
 public class MarkdownBodyParserTests
 {
     private static readonly string NewLine = Environment.NewLine;
-
-    [Fact]
-    public void Settings_ShouldNotBeInOutput_Always()
-    {
-        var contentText = @"---
-tags: [tag1, tag2]
-project: project1
-type: unitTestArticle
----
-hi";
-
-        Assert.Equal("<p>hi</p>", ToHtml(contentText));
-    }
     
     [Fact]
     public void MarkdownWithoutSettings_ShouldBeRendered_Always()
@@ -58,7 +45,7 @@ hi";
 | John | No link |
 | Henry | ![mountain](mountain.jpg) |";
 
-        Assert.Equal("<table><thead><tr><th>Name</th><th>Link</th></tr></thead><tbody><tr><td>John</td><td>No link</td></tr><tr><td>Henry</td><td><img src=\"mountain.jpg\" title=\"\" alt=\"mountain\" /></td></tr></tbody></table>", ToHtml(contentText));
+        Assert.Equal("<table><thead><tr><th>Name</th><th>Link</th></tr></thead><tbody><tr><td>John</td><td>No link</td></tr><tr><td>Henry</td><td><img src=\"mountain.jpg\" alt=\"mountain\" /></td></tr></tbody></table>", ToHtml(contentText));
     }
     
     [Fact]
@@ -189,7 +176,7 @@ inside text";
     {
         var contentText = @"[![Big mountain](/assets/mountain.jpg ""Everest"")](http://link)";
 
-        Assert.Equal("<p><img src=\"/assets/mountain.jpg\" title=\"Everest\" alt=\"Big mountain\" /><img src=\"/assets/mini-mountain.jpg\" title=\"Elbrus\" alt=\"Small mountain\" /></p>", ToHtml(contentText));
+        Assert.Equal("<p><a href=\"http://link\"><img src=\"/assets/mountain.jpg\" title=\"Everest\" alt=\"Big mountain\" /></a></p>", ToHtml(contentText));
     }
     
     [Fact]

@@ -1,11 +1,14 @@
-﻿using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
+using Laraue.Interpreter.Markdown.Body.BlockElements;
+using Laraue.Interpreter.Markdown.Body.Blocks;
 using Laraue.Interpreter.Parsing;
 using Laraue.Interpreter.Scanning;
 
 namespace Laraue.Interpreter.Markdown.Body;
 
-public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
-    : TokenParser<MarkdownTokenType, MarkdownTree>(tokens)
+public class MarkdownTokenParser
+    : TokenParser<MarkdownTokenType, MarkdownTree>
 {
     protected override MarkdownTree ParseInternal()
     {
@@ -24,65 +27,60 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
 
         return new MarkdownTree
         {
-            ContentBlocks = PostProcessBlocks(contentBlocks),
+            ContentBlocks = contentBlocks.ToArray(),
         };
     }
 
-    private static MarkdownContentBlock[] PostProcessBlocks(
-        List<MarkdownContentBlock> blocks)
+    private class ReadBlockDelegate
     {
-        // Merge the parts of md file in one line
-        var result = new List<MarkdownContentBlock>();
-        
-        MarkdownContentBlock? previous = null;
-        var blocksIterator = blocks.GetEnumerator();
-        
-        while (blocksIterator.MoveNext())
-        {
-            if (previous is not PlainMarkdownContentBlock plainMarkdownContentBlock)
+        public required Func<bool> IsApplicable { get; init; }
+        public required Func<MarkdownContentBlock> Read { get; init; }
+    }
+
+    private readonly List<ReadBlockDelegate> _readBlockDelegates = new ();
+
+    public MarkdownTokenParser(Token<MarkdownTokenType>[] tokens) : base(tokens)
+    {
+        _readBlockDelegates.AddRange(
+            new ReadBlockDelegate
             {
-                previous = blocksIterator.Current;
-                result.Add(previous);
-                continue;
+                IsApplicable = () => Check(MarkdownTokenType.NumberSign),
+                Read = ReadHeading
+            },
+            new ReadBlockDelegate
+            {
+                IsApplicable = () => Check(MarkdownTokenType.Pipe),
+                Read = ReadTable
+            },
+            new ReadBlockDelegate
+            {
+                IsApplicable = () => CheckSequential(MarkdownTokenType.Backtick, 3),
+                Read = ReadCode
+            },
+            new ReadBlockDelegate
+            {
+                IsApplicable = () => CheckSequential(
+                    MarkdownTokenType.Number,
+                    MarkdownTokenType.Dot,
+                    MarkdownTokenType.Whitespace),
+                Read = ReadOrderedList
+            },
+            new ReadBlockDelegate
+            {
+                IsApplicable = () => CheckSequential(
+                    MarkdownTokenType.MinusSign,
+                    MarkdownTokenType.Whitespace),
+                Read = ReadUnorderedList
             }
-
-            var mergedElements = new List<MarkdownContentBlockElement>(plainMarkdownContentBlock.Elements);
-            
-            do
-            {
-                var current = blocksIterator.Current;
-                if (current is PlainMarkdownContentBlock currentPlainBlock)
-                {
-                    mergedElements.Add(new PlainMarkdownContentBlockElement
-                    {
-                        Content = " "
-                    });
-                    
-                    mergedElements.AddRange(currentPlainBlock.Elements);
-                    if (!blocksIterator.MoveNext())
-                        break;
-                }
-                else
-                    break;
-
-            } while (true);
-
-            if (mergedElements.Count > 0)
-            {
-                plainMarkdownContentBlock.Elements = mergedElements.ToArray();
-            }
-        }
-
-        return result.ToArray();
+        );
     }
 
     private MarkdownContentBlock ReadNextBlock()
     {
-        if (Check(MarkdownTokenType.NumberSign))
-            return ReadHeading();
-        if (MatchSequential(MarkdownTokenType.Backtick, 3))
-            return ReadCode();
-        return ReadPlain();
+        var readDelegate = _readBlockDelegates
+            .FirstOrDefault(x => x.IsApplicable());
+
+        return readDelegate is not null ? readDelegate.Read() : ReadPlain();
     }
 
     private HeadingMarkdownContentBlock ReadHeading()
@@ -99,42 +97,200 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
         };
     }
     
+    private TableContentBlock ReadTable()
+    {
+        var rows = new List<TableContentBlockRow>();
+        while (TryReadTableRow(out var row))
+            rows.Add(row);
+
+        if (IsTableContentDivider(rows.First()))
+        {
+            return new TableContentBlock
+            {
+                Header = null,
+                Rows = rows.Skip(1).ToArray()
+            };
+        }
+        
+        return new TableContentBlock
+        {
+            Header = rows.First(),
+            Rows = rows.Skip(2).ToArray()
+        };
+    }
+
+    private bool IsTableContentDivider(TableContentBlockRow row)
+    {
+        return row.Cells.Length > 0 && row.Cells
+            .All(c => c.Elements.Length > 0 && c.Elements
+                .All(e => e is PlainMarkdownContentBlockElement { Content: "-" }));
+    }
+
+    private bool TryReadTableRow(
+        [NotNullWhen(true)] out TableContentBlockRow? row)
+    {
+        row = null;
+        if (!Match(MarkdownTokenType.Pipe))
+            return false;
+        
+        var rowItems = new List<List<MarkdownContentBlockElement>>();
+        
+        var nextCellElements = new List<MarkdownContentBlockElement>();
+        while (!IsParseCompleted && !Match(MarkdownTokenType.NewLine))
+        {
+            if (Match(MarkdownTokenType.Pipe))
+            {
+                rowItems.Add(nextCellElements);
+                nextCellElements = [];
+                continue;
+            }
+            
+            var nextCellElement = ReadElement();
+            nextCellElements.Add(nextCellElement);
+        }
+
+        var cells = rowItems
+            .Select(h => new TableContentBlockCell
+            {
+                Elements = h.Trim(" ").ToArray()
+            })
+            .ToArray();
+
+        row = new TableContentBlockRow
+        {
+            Cells = cells
+        };
+
+        return true;
+    }
+    
     private PlainMarkdownContentBlock ReadPlain()
     {
+        var result = new List<MarkdownContentBlockElement>();
+        while (!IsParseCompleted)
+        {
+            result.AddRange(ReadRowElements());
+            
+            // Unite some blocks paragraph block into the one 
+            Skip(MarkdownTokenType.Whitespace, MarkdownTokenType.NewLine);
+            if (_readBlockDelegates.Any(d => d.IsApplicable()))
+                break;
+            
+            // Check for possible adding new line
+            if (
+                Check(-2, MarkdownTokenType.Whitespace)
+                && Check(-3, MarkdownTokenType.Whitespace))
+            {
+                result.Add(new NewLineElement());
+                continue;
+            }
+            
+            if (!IsParseCompleted)
+                result.Add(new PlainMarkdownContentBlockElement
+                {
+                    Content = " "
+                });
+        }
+        
         return new PlainMarkdownContentBlock
         {
-            Elements = ReadRowElements(),
+            Elements = result.ToArray()
+        };
+    }
+
+    private ListBlock ReadOrderedList()
+    {
+        var rows = ReadListRows([
+            MarkdownTokenType.Number,
+            MarkdownTokenType.Dot,
+            MarkdownTokenType.Whitespace]);
+
+        return new ListBlock
+        {
+            Rows = rows,
+            IsOrdered = true,
+        };
+    }
+
+    private ListBlock ReadUnorderedList()
+    {
+        var rows = ReadListRows([
+            MarkdownTokenType.MinusSign,
+            MarkdownTokenType.Whitespace]);
+
+        return new ListBlock
+        {
+            Rows = rows,
+            IsOrdered = false,
         };
     }
     
+    private ListRow[] ReadListRows(MarkdownTokenType[] startTokens)
+    {
+        var listNode = new ListNode();
+        
+        var previousElementSpacesCount = 0;
+        while (!IsParseCompleted && MatchSequential(startTokens))
+        {
+            var next = ReadPlain();
+            listNode.Write(previousElementSpacesCount, next.Elements);
+            previousElementSpacesCount = 0;
+            while (Check(-previousElementSpacesCount - 1, MarkdownTokenType.Whitespace))
+                previousElementSpacesCount++;
+        }
+
+        return listNode.GetListRows();
+    }
+
+    private class ListNode
+    {
+        private int? _initialIdent;
+        private readonly List<ListRow> _elements = new();
+        
+        public void Write(int spacesCount, MarkdownContentBlockElement[] elements)
+        {
+            var ident = spacesCount / 3;
+            _initialIdent ??= ident;
+            
+            var realIdent = Math.Abs(ident - _initialIdent.Value);
+            var currentNode = _elements;
+            for (var i = 0; i < realIdent; i++)
+            {
+                if (currentNode.Count == 0)
+                    currentNode.Add(new ListRow { Elements = [] });
+                currentNode = currentNode.Last().Children;
+            }
+            
+            currentNode.Add(new ListRow { Elements = elements });
+        }
+
+        public ListRow[] GetListRows()
+        {
+            return _elements.ToArray();
+        }
+    }
+
     private CodeMarkdownContentBlock ReadCode()
     {
+        Advance(3);
+        
         var result = new List<MarkdownContentBlockElement>();
         
         string? language = null;
         if (Match(MarkdownTokenType.Word))
             language = Previous().Literal?.ToString();
         
-        // Whitespaces after the block declaration doesn't matter
-        Skip(MarkdownTokenType.NewLine);
-        Skip(MarkdownTokenType.Whitespace);
-
-        var lastNonEmptyTokenNumber = 0;
-        
-        while (!IsParseCompleted && !MatchSequential(MarkdownTokenType.Backtick, 3))
+        while (
+            !IsParseCompleted
+            && !MatchSequential(MarkdownTokenType.Backtick, 3))
         {
-            var consumed = Peek();
-            
-            var element = ReadElement();
+            var element = ReadPlainElement();
             result.Add(element);
-
-            if (consumed.TokenType is not MarkdownTokenType.NewLine and not MarkdownTokenType.Whitespace)
-                lastNonEmptyTokenNumber = result.Count;
         }
 
         return new CodeMarkdownContentBlock
         {
-            Elements = result.Take(lastNonEmptyTokenNumber).ToArray(),
+            Elements = result.Trim(Environment.NewLine).ToArray(),
             Language = language
         };
     }
@@ -143,22 +299,13 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
     {
         var result = new List<MarkdownContentBlockElement>();
         
-        // Whitespaces while reading row doesn't matter.
-        Skip(MarkdownTokenType.Whitespace);
-        
-        var lastNonEmptyTokenNumber = 0;
-        while (!IsParseCompleted && !Check(MarkdownTokenType.NewLine))
+        while (!IsParseCompleted && !Match(MarkdownTokenType.NewLine))
         {
-            var consumed = Peek();
-            
             var element = ReadElement();
             result.Add(element);
-            
-            if (consumed.TokenType is not MarkdownTokenType.NewLine and not MarkdownTokenType.Whitespace)
-                lastNonEmptyTokenNumber = result.Count;
         }
         
-        return result.Take(lastNonEmptyTokenNumber).ToArray();
+        return result.Trim(" ").ToArray();
     }
     
     private MarkdownContentBlockElement ReadElement()
@@ -250,12 +397,9 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
     
     private LinkCodeMarkdownContentBlockElement ReadLink()
     {
-        var linkContentBuilder = new StringBuilder();
+        var linkContent = new List<MarkdownContentBlockElement>();
         while (!IsRowEndReached() && !Match(MarkdownTokenType.RightSquareBracket))
-        {
-            var next = ReadPlainElement();
-            linkContentBuilder.Append(next.Content);
-        }
+            linkContent.Add(ReadElement());
 
         string? href = null;
         if (Match(MarkdownTokenType.LeftParenthesis))
@@ -272,7 +416,7 @@ public class MarkdownTokenParser(Token<MarkdownTokenType>[] tokens)
 
         return new LinkCodeMarkdownContentBlockElement
         {
-            Title = linkContentBuilder.ToString(),
+            Link = linkContent.ToArray(),
             Href = href,
         };
     }

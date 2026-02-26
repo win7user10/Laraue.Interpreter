@@ -1,4 +1,6 @@
 ﻿using System.Text;
+using Laraue.Interpreter.Markdown.Body.BlockElements;
+using Laraue.Interpreter.Markdown.Body.Blocks;
 
 namespace Laraue.Interpreter.Markdown.Body;
 
@@ -33,6 +35,12 @@ public class MarkdownTreeWriter
             case HeadingMarkdownContentBlock headingBlock:
                 Write(sb, headingBlock);
                 break;
+            case TableContentBlock tableBlock:
+                Write(sb, tableBlock);
+                break;
+            case ListBlock orderedListBlock:
+                Write(sb, orderedListBlock);
+                break;
             default:
                 throw new NotImplementedException(contentBlock.GetType().Name);
         }
@@ -63,7 +71,74 @@ public class MarkdownTreeWriter
     
     private void Write(StringBuilder sb, HeadingMarkdownContentBlock headingBlock)
     {
-        WriteElements(sb, $"h{headingBlock.Level}", headingBlock.Elements);
+        var innerSb = new StringBuilder();
+        foreach (var innerElement in headingBlock.Elements)
+            Write(innerSb, innerElement);
+
+        var id = HeadingUtility.GenerateHeadingId(innerSb);
+        
+        sb
+            .Append($"<h{headingBlock.Level} id=\"")
+            .Append(id)
+            .Append("\">")
+            .Append(innerSb)
+            .Append($"</h{headingBlock.Level}>");
+    }
+    
+    private void Write(StringBuilder sb, TableContentBlock tableBlock)
+    {
+        sb
+            .Append("<table>");
+
+        if (tableBlock.Header is not null)
+        {
+            sb.Append("<thead>")
+                .Append("<tr>");
+
+            foreach (var row in tableBlock.Header.Cells)
+                WriteElements(sb, "th", row.Elements);
+
+            sb
+                .Append("</tr>")
+                .Append("</thead>");
+        }
+        
+        sb.Append("<tbody>");
+
+        foreach (var row in tableBlock.Rows)
+        {
+            sb.Append("<tr>");
+            foreach (var cell in row.Cells)
+                WriteElements(sb, "td", cell.Elements);
+            sb.Append("</tr>");
+        }
+        
+        sb
+            .Append("</tbody>")
+            .Append("</table>");
+    }
+    
+    private void Write(StringBuilder sb, ListBlock listBlock)
+    {
+        var tag = listBlock.IsOrdered ? "ol" : "ul";
+        WriteListRow(sb, listBlock.Rows, tag);
+    }
+
+    private void WriteListRow(StringBuilder stringBuilder, IEnumerable<ListRow> rows, string tag)
+    {
+        stringBuilder
+            .Append($"<{tag}>");
+
+        foreach (var row in rows)
+        {
+            if (row.Elements.Length > 0)
+                WriteElements(stringBuilder, "li", row.Elements);
+            if (row.Children.Count > 0)
+                WriteListRow(stringBuilder, row.Children, tag);
+        }
+            
+        stringBuilder
+            .Append($"</{tag}>");
     }
     
     private void Write(StringBuilder sb, MarkdownContentBlockElement contentBlockElement)
@@ -87,6 +162,9 @@ public class MarkdownTreeWriter
                 break;
             case ImageCodeMarkdownContentBlockElement imageElement:
                 Write(sb, imageElement);
+                break;
+            case NewLineElement newLineElement:
+                Write(sb, newLineElement);
                 break;
             default:
                 throw new NotImplementedException();
@@ -125,9 +203,12 @@ public class MarkdownTreeWriter
         
         WriteAttribute(sb, "href", linkElement.Href);
         
-        sb.Append('>')
-            .Append(linkElement.Title)
-            .Append("</a>");
+        sb.Append('>');
+        
+        foreach (var innerElement in linkElement.Link)
+            Write(sb, innerElement);
+        
+        sb.Append("</a>");
     }
     
     private void Write(StringBuilder sb, ImageCodeMarkdownContentBlockElement imageElement)
@@ -139,6 +220,11 @@ public class MarkdownTreeWriter
         WriteAttribute(sb, "alt", imageElement.Alt);
         
         sb.Append(" />");
+    }
+    
+    private void Write(StringBuilder sb, NewLineElement newLineElement)
+    {
+        sb.AppendLine();
     }
 
     private void WriteAttribute(
@@ -155,10 +241,10 @@ public class MarkdownTreeWriter
     private void WriteElements(
         StringBuilder sb,
         string wrappingTag,
-        MarkdownContentBlockElement[] elements)
+        IEnumerable<MarkdownContentBlockElement> elements)
     {
         sb.Append($"<{wrappingTag}>");
-        
+
         foreach (var innerElement in elements)
             Write(sb, innerElement);
 

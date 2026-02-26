@@ -113,10 +113,12 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
     /// </summary>
     protected bool Check(int offset, TTokenType? exceptedTokenType)
     {
-        if (tokens.Length <= _current + offset)
-        {
+        var tokenIndex = _current + offset;
+        if (tokenIndex < 0)
             return false;
-        }
+        
+        if (tokens.Length <= tokenIndex)
+            return false;
 
         var realTokenType = tokens[_current + offset].TokenType;
         return EqualityComparer<TTokenType?>.Default.Equals(realTokenType, exceptedTokenType);

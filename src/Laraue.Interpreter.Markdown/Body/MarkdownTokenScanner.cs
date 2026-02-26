@@ -44,8 +44,14 @@ public class MarkdownTokenScanner(string input)
             case '!':
                 AddToken(MarkdownTokenType.Not);
                 return true;
+            case '|':
+                AddToken(MarkdownTokenType.Pipe);
+                return true;
             case '"':
                 AddToken(MarkdownTokenType.Quote);
+                return true;
+            case '.':
+                AddToken(MarkdownTokenType.Dot);
                 return true;
             default:
                 AddWordOrNumber();
@@ -55,16 +61,25 @@ public class MarkdownTokenScanner(string input)
     
     private void AddWordOrNumber()
     {
+        var startsWithDigit = Check(-1, IsDigit);
+        while (PopNextCharIf(IsDigit));
+        
+        // Digit string found
+        if (startsWithDigit && !Check(0, IsAlpha))
+        {
+            var stringValue = GetCurrentScanValue();
+            AddToken(MarkdownTokenType.Number, stringValue.ToString());
+            return;
+        }
+        
+        // Usual string
         while (PopNextCharIf(IsWordChar));
-        
         var text = GetCurrentScanValue().Trim();
-        
         AddToken(MarkdownTokenType.Word, text.ToString());
     }
 
     private bool IsWordChar(char ch)
     {
-        var otherChars = new[] { 'a', 'b' };
-        return IsDigit(ch) || IsAlpha(ch) || otherChars.Contains(ch);
+        return IsDigit(ch) || IsAlpha(ch);
     }
 }
