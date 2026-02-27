@@ -8,18 +8,36 @@ namespace Laraue.Interpreter.Markdown;
 /// <summary>
 /// The class contains methods to transpile Markdown. 
 /// </summary>
-public static class MarkdownTranspiler
+public interface IMarkdownTranspiler
 {
     /// <summary>
     /// Transpile Markdown to HTML.
     /// </summary>
     /// <param name="markdown"></param>
     /// <returns></returns>
-    public static MarkdownTranspileResult ToHtml(string markdown)
+    public MarkdownTranspileResult ToHtml(string markdown);
+
+    /// <summary>
+    /// Get AST from the passed Markdown content. 
+    /// </summary>
+    /// <param name="markdown"></param>
+    /// <returns></returns>
+    public MarkdownTreeResult GetTree(string markdown);
+}
+
+public class MarkdownTranspiler(WriteOptions options) : IMarkdownTranspiler
+{
+    private readonly MarkdownTreeWriter _markdownTreeWriter = new(options);
+
+    public MarkdownTranspiler() : this(new WriteOptions())
+    {}
+    
+    /// <inheritdoc />
+    public MarkdownTranspileResult ToHtml(string markdown)
     {
         var treeResult = GetTree(markdown);
 
-        var content = new MarkdownTreeWriter().Write(treeResult.Tree);
+        var content = _markdownTreeWriter.Write(treeResult.Tree);
         return new MarkdownTranspileResult
         {
             HtmlContent = content,
@@ -27,12 +45,8 @@ public static class MarkdownTranspiler
         };
     }
     
-    /// <summary>
-    /// Get AST from the passed Markdown content. 
-    /// </summary>
-    /// <param name="markdown"></param>
-    /// <returns></returns>
-    public static MarkdownTreeResult GetTree(string markdown)
+    /// <inheritdoc />
+    public MarkdownTreeResult GetTree(string markdown)
     {
         var metaScanner = new MarkdownMetaTokenScanner(markdown);
         var metaScanResult = metaScanner.ScanTokens();
@@ -56,10 +70,10 @@ public static class MarkdownTranspiler
             Headers = metaParseResult.Result.Headers,
         };
     }
+}
     
-    public class MarkdownTreeResult
-    {
-        public required MarkdownTree Tree { get; init; }
-        public required MarkdownHeader[] Headers { get; init; }
-    }
+public class MarkdownTreeResult
+{
+    public required MarkdownTree Tree { get; init; }
+    public required MarkdownHeader[] Headers { get; init; }
 }

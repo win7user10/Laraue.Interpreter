@@ -176,13 +176,10 @@ public class MarkdownTokenParser
             if (_readBlockDelegates.Any(d => d.IsApplicable()))
                 break;
             
-            // Check for possible adding new line
-            if (
-                Check(-2, MarkdownTokenType.Whitespace)
-                && Check(-3, MarkdownTokenType.Whitespace))
+            // Cases where the paragraph is ended
+            if (PreviousLineWithTwoWhitespaces() || PreviousLineIsNewLine())
             {
-                result.Add(new NewLineElement());
-                continue;
+                break;
             }
             
             if (!IsParseCompleted)
@@ -196,6 +193,19 @@ public class MarkdownTokenParser
         {
             Elements = result.ToArray()
         };
+    }
+
+    private bool PreviousLineWithTwoWhitespaces()
+    {
+        return Check(-1, MarkdownTokenType.NewLine)
+           && Check(-2, MarkdownTokenType.Whitespace)
+           && Check(-3, MarkdownTokenType.Whitespace);
+    }
+    
+    private bool PreviousLineIsNewLine()
+    {
+        return Check(-1, MarkdownTokenType.NewLine)
+            && Check(-2, MarkdownTokenType.NewLine);
     }
 
     private ListBlock ReadOrderedList()
@@ -232,8 +242,23 @@ public class MarkdownTokenParser
         var previousElementSpacesCount = 0;
         while (!IsParseCompleted && MatchSequential(startTokens))
         {
-            var next = ReadPlain();
-            listNode.Write(previousElementSpacesCount, next.Elements);
+            var elements = new List<MarkdownContentBlockElement>();
+            
+            // New line should continue list item, so that's code is here
+            while (!IsParseCompleted)
+            {
+                var next = ReadPlain();
+                var elementsToWrite = next.Elements;
+                elements.AddRange(elementsToWrite);
+                
+                if (PreviousLineWithTwoWhitespaces())
+                    elements.Add(new NewLineElement());
+                else
+                    break;
+            }
+                    
+            listNode.Write(previousElementSpacesCount, elements.ToArray());
+            
             previousElementSpacesCount = 0;
             while (Check(-previousElementSpacesCount - 1, MarkdownTokenType.Whitespace))
                 previousElementSpacesCount++;

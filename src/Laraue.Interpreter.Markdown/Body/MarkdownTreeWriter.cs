@@ -6,6 +6,13 @@ namespace Laraue.Interpreter.Markdown.Body;
 
 public class MarkdownTreeWriter
 {
+    private readonly WriteOptions _options;
+
+    public MarkdownTreeWriter(WriteOptions options)
+    {
+        _options = options;
+    }
+    
     private static readonly Dictionary<char, string> EscapedChars = new()
     {
         ['<'] = "&lt;",
@@ -75,12 +82,18 @@ public class MarkdownTreeWriter
         foreach (var innerElement in headingBlock.Elements)
             Write(innerSb, innerElement);
 
-        var id = HeadingUtility.GenerateHeadingId(innerSb);
-        
+        sb.Append($"<h{headingBlock.Level}");
+        if (_options.AddIdAttributeToHeaders)
+        {
+            var id = HeadingUtility.GenerateHeadingId(innerSb);
+            sb
+                .Append(" id=\"")
+                .Append(id)
+                .Append('"');
+        }
+
         sb
-            .Append($"<h{headingBlock.Level} id=\"")
-            .Append(id)
-            .Append("\">")
+            .Append('>')
             .Append(innerSb)
             .Append($"</h{headingBlock.Level}>");
     }

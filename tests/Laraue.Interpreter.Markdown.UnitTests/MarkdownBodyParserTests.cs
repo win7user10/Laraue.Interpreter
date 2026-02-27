@@ -68,7 +68,7 @@ Description [link](http://test_1.com)
 ## Heading
 And text";
 
-        Assert.Equal("<ol><li>Item #1 Description <a href=\"http://test_1.com\">link</a></li><li>Item #2</li></ol><h2 id=\"heading\">Heading</h2><p>And text</p>", ToHtml(contentText));
+        Assert.Equal("<ol><li>Item #1 Description <a href=\"http://test_1.com\">link</a></li><li>Item #2</li></ol><h2>Heading</h2><p>And text</p>", ToHtml(contentText));
     }
     
     [Fact]
@@ -107,6 +107,25 @@ Hi
 2. **Second:** item";
         
         Assert.Equal("<p>List title</p><ol><li><b>First:</b> item</li><li><b>Second:</b> item</li></ol>", ToHtml(contentText));
+    }
+    
+    [Fact]
+    public void Carries_ShouldBeAdded_AfterTwoWhitespaces()
+    {
+        var contentText = @"**Hey, guys**  
+I am here";
+        
+        Assert.Equal($"<p><b>Hey, guys</b></p><p>I am here</p>", ToHtml(contentText));
+    }
+    
+    [Fact]
+    public void Carries_ShouldBeAdded_AfterTwoNewLines()
+    {
+        var contentText = @"**Hey, guys**
+
+I am here";
+        
+        Assert.Equal("<p><b>Hey, guys</b></p><p>I am here</p>", ToHtml(contentText));
     }
     
     [Fact]
@@ -185,7 +204,7 @@ inside text";
         var contentText = @"![mountain](mountain.jpg)
 ## Next title";
 
-        Assert.Equal("<p><img src=\"mountain.jpg\" alt=\"mountain\" /></p><h2 id=\"next-title\">Next title</h2>", ToHtml(contentText));
+        Assert.Equal("<p><img src=\"mountain.jpg\" alt=\"mountain\" /></p><h2>Next title</h2>", ToHtml(contentText));
     }
 
     private static string ToHtml(string markdown)
@@ -198,6 +217,6 @@ inside text";
         var parseResult = parser.Parse();
         parseResult.ThrowOnAnyError();
 
-        return new MarkdownTreeWriter().Write(parseResult.Result!);
+        return new MarkdownTreeWriter(new WriteOptions()).Write(parseResult.Result!);
     }
 }

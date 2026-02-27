@@ -32,7 +32,7 @@ Hi, _Italic_ __bold__ `font`  next string;
 | ---  | ------- |
 | Alex | Kent    |";
 
-        var result = MarkdownTranspiler.ToHtml(markdownFile);
+        var result = new MarkdownTranspiler().ToHtml(markdownFile);
         var headers = result.Headers;
         
         Assert.Equal(3, headers.Length);
@@ -63,7 +63,7 @@ Hi, _Italic_ __bold__ `font`  next string;
     {
         const string markdownFile = "Only content";
 
-        var result = MarkdownTranspiler.ToHtml(markdownFile);
+        var result = new MarkdownTranspiler().ToHtml(markdownFile);
         
         Assert.Empty(result.Headers);
         Assert.Equal("<p>Only content</p>", result.HtmlContent);
