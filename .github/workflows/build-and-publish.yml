@@ -35,4 +35,5 @@ jobs:
       run: dotnet pack --no-build -c Release -o .
       
     - name: Push to GitHub package registry
+      if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')
       run: dotnet nuget push "*.nupkg" -k ${{secrets.NUGETORGTOKEN}} -s https://api.nuget.org/v3/index.json --skip-duplicate 
