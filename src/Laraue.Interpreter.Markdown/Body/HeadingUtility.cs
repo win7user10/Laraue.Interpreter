@@ -4,7 +4,7 @@ namespace Laraue.Interpreter.Markdown.Body;
 
 public static class HeadingUtility
 {
-    public static string GenerateHeadingId(StringBuilder text)
+    public static StringBuilder GenerateHeadingId(StringBuilder text)
     {
         var sb = new StringBuilder();
 
@@ -19,6 +19,6 @@ public static class HeadingUtility
                 sb.Append(nextChar);
         }
 
-        return sb.ToString();
+        return sb;
     }
 }

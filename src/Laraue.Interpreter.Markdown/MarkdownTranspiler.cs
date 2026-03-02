@@ -25,11 +25,16 @@ public interface IMarkdownTranspiler
     public MarkdownTreeResult GetTree(string markdown);
 }
 
-public class MarkdownTranspiler(WriteOptions options) : IMarkdownTranspiler
+public class MarkdownTranspiler(
+    WriteOptions options, 
+    IMarkdownInnerLinksGenerator innerLinksGenerator)
+    : IMarkdownTranspiler
 {
     private readonly MarkdownTreeWriter _markdownTreeWriter = new(options);
 
-    public MarkdownTranspiler() : this(new WriteOptions())
+    public MarkdownTranspiler() : this(
+        new WriteOptions(),
+        new MarkdownInnerLinksGenerator())
     {}
     
     /// <inheritdoc />
@@ -38,10 +43,15 @@ public class MarkdownTranspiler(WriteOptions options) : IMarkdownTranspiler
         var treeResult = GetTree(markdown);
 
         var content = _markdownTreeWriter.Write(treeResult.Tree);
+        ICollection<MarkdownInnerLink> links = [];
+        if (options.GenerateHeaderLinks)
+            links = innerLinksGenerator.ParseLinks(treeResult.Tree);
+        
         return new MarkdownTranspileResult
         {
             HtmlContent = content,
             Headers = treeResult.Headers,
+            InnerLinks = links.ToArray(),
         };
     }
     

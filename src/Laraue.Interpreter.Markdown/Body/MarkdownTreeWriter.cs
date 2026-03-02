@@ -83,7 +83,7 @@ public class MarkdownTreeWriter
             Write(innerSb, innerElement);
 
         sb.Append($"<h{headingBlock.Level}");
-        if (_options.AddIdAttributeToHeaders)
+        if (_options.GenerateHeaderLinks)
         {
             var id = HeadingUtility.GenerateHeadingId(innerSb);
             sb
