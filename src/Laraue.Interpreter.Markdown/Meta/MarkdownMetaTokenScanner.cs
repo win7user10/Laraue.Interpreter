@@ -91,7 +91,7 @@ public class MarkdownMetaTokenScanner(string input)
         AddToken(MarkdownMetaTokenType.Content, text.ToString());
     }
     
-    private readonly char[] _nonWordsChar = [',', '\r', ':', '[', ']'];
+    private readonly char[] _nonWordsChar = [',', '\r', '\n', ':', '[', ']'];
     
     private void AddWordOrNumber()
     {
