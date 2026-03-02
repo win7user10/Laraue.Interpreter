@@ -52,6 +52,9 @@ tags  : [tag1,  tag2 ]
 
 project: project1
 type: unitTestArticle
+createdAt: 2020-01-01
+multiLineString: [person 1, person 2]
+brokenArray: [asdqq, aa
 ---
 
 # Title of level 1";
@@ -61,7 +64,7 @@ type: unitTestArticle
 
         var headers = parseResult.Headers;
         
-        Assert.Equal(3, headers.Length);
+        Assert.Equal(6, headers.Length);
         
         CheckHeaderUtility.Check(
             headers[0],
@@ -80,6 +83,24 @@ type: unitTestArticle
             "type",
             6,
             "unitTestArticle");
+        
+        CheckHeaderUtility.Check(
+            headers[3],
+            "createdAt",
+            7,
+            "2020-01-01");
+        
+        CheckHeaderUtility.Check(
+            headers[4],
+            "multiLineString",
+            8,
+            new[] { "person 1", "person 2" });
+        
+        CheckHeaderUtility.Check(
+            headers[5],
+            "brokenArray",
+            9,
+            "[asdqq, aa");
     }
 
     private static MarkdownMetaTree Parse(string markdown)

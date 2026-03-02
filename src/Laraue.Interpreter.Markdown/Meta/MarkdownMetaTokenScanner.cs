@@ -16,6 +16,7 @@ public class MarkdownMetaTokenScanner(string input)
         switch (nextChar)
         {
             case ' ':
+                AddToken(MarkdownMetaTokenType.WhiteSpace);
                 return true;
             default:
                 HandleNonWhitespaceChar(nextChar);
@@ -90,12 +91,12 @@ public class MarkdownMetaTokenScanner(string input)
         AddToken(MarkdownMetaTokenType.Content, text.ToString());
     }
     
+    private readonly char[] _nonWordsChar = [',', '\r', ':', '[', ']'];
+    
     private void AddWordOrNumber()
     {
         // Check if only whitespaces remained then finish
-        while (PopNextCharIf(ch => IsDigit(ch) || IsAlpha(ch) || ch == ' ' || ch == '_'))
-        {
-        }
+        while (PopNextCharIf(ch => !_nonWordsChar.Contains(ch)));
         
         var text = GetCurrentScanValue().Trim();
         AddToken(MarkdownMetaTokenType.Word, text.ToString());

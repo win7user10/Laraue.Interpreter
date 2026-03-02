@@ -14,8 +14,8 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
     where TParsedExpression : class
 {
     private readonly List<ParseError<TTokenType>> _errors = [];
-    private int _current;
-    
+    public int CurrentIndex { get; private set; }
+
     /// <summary>
     /// Run the tokens parsing.
     /// </summary>
@@ -113,14 +113,14 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
     /// </summary>
     protected bool Check(int offset, TTokenType? exceptedTokenType)
     {
-        var tokenIndex = _current + offset;
+        var tokenIndex = CurrentIndex + offset;
         if (tokenIndex < 0)
             return false;
         
         if (tokens.Length <= tokenIndex)
             return false;
 
-        var realTokenType = tokens[_current + offset].TokenType;
+        var realTokenType = tokens[CurrentIndex + offset].TokenType;
         return EqualityComparer<TTokenType?>.Default.Equals(realTokenType, exceptedTokenType);
     }
 
@@ -131,7 +131,7 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
     /// <returns></returns>
     protected int? GetNextOffset(TTokenType tokenType)
     {
-        for (var i = 0; i < tokens.Length - _current; i++)
+        for (var i = 0; i < tokens.Length - CurrentIndex; i++)
         {
             if (Check(i, tokenType))
             {
@@ -148,7 +148,7 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
     /// </summary>
     protected bool CheckSkipping(TTokenType tokenType, params TTokenType?[] allowsToSkip)
     {
-        for (var i = 0; i < tokens.Length - _current; i++)
+        for (var i = 0; i < tokens.Length - CurrentIndex; i++)
         {
             if (Check(i, tokenType))
             {
@@ -236,7 +236,7 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
     /// </summary>
     /// <exception cref="IndexOutOfRangeException">There is no current token.</exception>
     /// <returns></returns>
-    protected Token<TTokenType> Peek() => tokens[_current];
+    protected Token<TTokenType> Peek() => tokens[CurrentIndex];
 
     /// <summary>
     /// Switch to the next token and returns previous.
@@ -245,7 +245,7 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
     protected Token<TTokenType> Advance()
     {
         if (!IsParseCompleted)
-            _current++;
+            CurrentIndex++;
 
         return Previous();
     }
@@ -265,19 +265,29 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
 
         return result!;
     }
+
+    /// <summary>
+    /// Get the token by position number.
+    /// </summary>
+    /// <param name="position"></param>
+    /// <returns></returns>
+    protected Token<TTokenType> Take(int position)
+    {
+        return tokens[position];
+    }
     
     /// <summary>
     /// Returns previous parsed token.
     /// </summary>
     /// <exception cref="IndexOutOfRangeException">The Previous token does not exist.</exception>
     /// <returns></returns>
-    protected Token<TTokenType> Previous() => tokens[_current - 1];
+    protected Token<TTokenType> Previous() => tokens[CurrentIndex - 1];
     
     /// <summary>
     /// Returns true when the previous token exists.
     /// </summary>
     /// <returns></returns>
-    protected bool HasPrevious() => _current > 0;
+    protected bool HasPrevious() => CurrentIndex > 0;
     
     /// <summary>
     /// Add error to the errors list and returns exception to raise. 

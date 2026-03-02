@@ -1,4 +1,5 @@
-﻿using Laraue.Interpreter.Parsing;
+﻿using System.Text;
+using Laraue.Interpreter.Parsing;
 using Laraue.Interpreter.Scanning;
 
 namespace Laraue.Interpreter.Markdown.Meta;
@@ -33,7 +34,7 @@ public class MarkdownMetaTokenParser(Token<MarkdownMetaTokenType>[] tokens)
         var headers = new List<MarkdownHeader>();
 
         // Read all header rows
-        while (Match(MarkdownMetaTokenType.NewLine))
+        while (!IsParseCompleted)
         {
             // Empty lines does not matter here
             Skip(MarkdownMetaTokenType.NewLine);
@@ -58,6 +59,8 @@ public class MarkdownMetaTokenParser(Token<MarkdownMetaTokenType>[] tokens)
         Consume(
             MarkdownMetaTokenType.Delimiter,
             "':' excepted after meta property definition");
+        
+        Skip(MarkdownMetaTokenType.WhiteSpace);
 
         var value = ConsumeValue();
 
@@ -65,33 +68,61 @@ public class MarkdownMetaTokenParser(Token<MarkdownMetaTokenType>[] tokens)
         {
             PropertyName = (word.Literal as string)!,
             Value = value,
-            LineNumber = Peek().LineNumber,
+            LineNumber = Previous().LineNumber,
         };
     }
 
     private object ConsumeValue()
     {
-        var result = new List<object>();
-
+        var startToken = CurrentIndex;
         if (!Match(MarkdownMetaTokenType.ArrayStart))
             return ConsumeSingleValue();
         
-        do
+        var arrayResult = new List<string>();
+        var singleResult = new StringBuilder();
+
+        while (!IsParseCompleted && !Match(MarkdownMetaTokenType.NewLine))
         {
-            var nextValue = ConsumeSingleValue();
-            result.Add(nextValue);
-        } while (Match(MarkdownMetaTokenType.Comma));
+            if (Match(MarkdownMetaTokenType.Comma))
+            {
+                arrayResult.Add(singleResult.ToString());
+                singleResult.Clear();
+                continue;
+            }
+
+            if (Match(MarkdownMetaTokenType.ArrayEnd))
+            {
+                arrayResult.Add(singleResult.ToString());
+                return arrayResult.ToArray();
+            }
             
-        Consume(MarkdownMetaTokenType.ArrayEnd, "']' excepted");
-        return result.ToArray();
+            var next = Advance();
+            singleResult.Append(next.Literal as string);
+        }
+
+        var sb = new StringBuilder();
+        var last = Previous();
+        for (var i = startToken;; i++)
+        {
+            var next = Take(i);
+            if (next == last)
+                break;
+            sb.Append(next.Literal ?? next.Lexeme);
+        }
+        
+        return sb.ToString();
     }
-    
+
     private string ConsumeSingleValue()
     {
-        var word = Consume(
-            MarkdownMetaTokenType.Word,
-            "The property definition excepted");
+        var singleResult = new StringBuilder();
 
-        return (word.Literal as string)!;
+        while (!IsParseCompleted && !Check(MarkdownMetaTokenType.NewLine))
+        {
+            var next = Advance();
+            singleResult.Append(next.Literal ?? next.Lexeme);
+        }
+            
+        return singleResult.ToString();
     }
 }

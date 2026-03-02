@@ -38,4 +38,6 @@ public enum MarkdownMetaTokenType
     Content,
     
     NewLine,
+    
+    WhiteSpace,
 }
