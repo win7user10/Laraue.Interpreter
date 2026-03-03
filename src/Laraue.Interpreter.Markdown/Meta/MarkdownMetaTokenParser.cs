@@ -17,15 +17,15 @@ public class MarkdownMetaTokenParser(Token<MarkdownMetaTokenType>[] tokens)
             headers = ReadHeaders();
         
         Skip(MarkdownMetaTokenType.NewLine); // Empty lines are allowed after meta section
-
-        var content = Consume(
-            MarkdownMetaTokenType.Content,
-            "Content block is excepted");
+        
+        var content = string.Empty;
+        if (Match(MarkdownMetaTokenType.Content))
+            content = Previous().Lexeme!;
         
         return new MarkdownMetaTree
         {
             Headers = headers,
-            Content = content.Lexeme!
+            Content = content
         };
     }
 

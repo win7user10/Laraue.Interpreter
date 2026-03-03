@@ -102,6 +102,26 @@ brokenArray: [asdqq, aa
             9,
             "[asdqq, aa");
     }
+    
+    [Fact]
+    public void MarkdownMetaTokenParser_ShouldParseTree_WhenContentMissing()
+    {
+        const string markdownFile = @"---
+project: project1
+---";
+        
+        var parseResult = Parse(markdownFile);
+        Assert.Empty(parseResult.Content);
+
+        var headers = parseResult.Headers;
+        var header = Assert.Single(headers);
+        
+        CheckHeaderUtility.Check(
+            header,
+            "project",
+            1,
+            "project1");
+    }
 
     private static MarkdownMetaTree Parse(string markdown)
     {
