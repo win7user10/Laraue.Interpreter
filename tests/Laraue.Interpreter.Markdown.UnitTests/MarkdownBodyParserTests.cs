@@ -65,10 +65,10 @@ public class MarkdownBodyParserTests
 Description [link](http://test_1.com)
 1. Item #2
 
-## Heading
+## [Heading](https://test.com)
 And text";
 
-        Assert.Equal("<ol><li>Item #1 Description <a href=\"http://test_1.com\">link</a></li><li>Item #2</li></ol><h2>Heading</h2><p>And text</p>", ToHtml(contentText));
+        Assert.Equal("<ol><li>Item #1 Description <a href=\"http://test_1.com\">link</a></li><li>Item #2</li></ol><h2 id=\"heading\"><a href=\"https://test.com\">Heading</a></h2><p>And text</p>", ToHtml(contentText, generateHeaderLinks: true));
     }
     
     [Fact]
@@ -207,7 +207,7 @@ inside text";
         Assert.Equal("<p><img src=\"mountain.jpg\" alt=\"mountain\" /></p><h2>Next title</h2>", ToHtml(contentText));
     }
 
-    private static string ToHtml(string markdown)
+    private static string ToHtml(string markdown, bool generateHeaderLinks = false)
     {
         var scanner = new MarkdownTokenScanner(markdown);
         var scanResult = scanner.ScanTokens();
@@ -217,6 +217,6 @@ inside text";
         var parseResult = parser.Parse();
         parseResult.ThrowOnAnyError();
 
-        return new MarkdownTreeWriter(new WriteOptions()).Write(parseResult.Result!);
+        return new MarkdownTreeWriter(new WriteOptions{ GenerateHeaderLinks = generateHeaderLinks}).Write(parseResult.Result!);
     }
 }

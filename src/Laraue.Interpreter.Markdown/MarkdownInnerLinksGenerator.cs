@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Laraue.Interpreter.Markdown.Body;
+using Laraue.Interpreter.Markdown.Body.BlockElements;
 using Laraue.Interpreter.Markdown.Body.Blocks;
 
 namespace Laraue.Interpreter.Markdown;
@@ -17,19 +18,15 @@ public class MarkdownInnerLinksGenerator : IMarkdownInnerLinksGenerator
         
         foreach (var headingBlock in markdownExpression.ContentBlocks.OfType<HeadingMarkdownContentBlock>())
         {
-            var linkBuilder = new StringBuilder();
-
-            foreach (var plainElement in headingBlock.Elements.OfType<PlainMarkdownContentBlockElement>())
-                linkBuilder.Append(plainElement.Content);
+            var heading = HeadingUtility.GenerateHeading(headingBlock.Elements);
             
-            var linkId = HeadingUtility
-                .GenerateHeadingId(linkBuilder)
+            var linkId = heading.Id
                 .Insert(0, '#');
             
             allLinks.Add(new MarkdownInnerLink
             {
                 Link = linkId.ToString(),
-                Title = linkBuilder.ToString(),
+                Title = heading.Title,
                 Level = headingBlock.Level,
             });
         }
