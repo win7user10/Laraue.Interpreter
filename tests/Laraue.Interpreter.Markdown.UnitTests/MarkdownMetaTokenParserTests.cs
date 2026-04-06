@@ -12,6 +12,7 @@ public class MarkdownMetaTokenParserTests
 tags: [tag1, tag2]
 project: project1
 type: unitTestArticle
+
 ---
 
 # Title of level 1";

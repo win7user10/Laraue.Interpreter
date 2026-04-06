@@ -59,6 +59,11 @@ public class MarkdownTokenParser
             },
             new ReadBlockDelegate
             {
+                IsApplicable = () => CheckSequential(MarkdownTokenType.MinusSign, 3),
+                Read = ReadHr
+            },
+            new ReadBlockDelegate
+            {
                 IsApplicable = () => Check(MarkdownTokenType.GreaterThan),
                 Read = ReadQuote
             },
@@ -137,6 +142,15 @@ public class MarkdownTokenParser
         {
             Elements = rows
         };
+    }
+    
+    private MarkdownContentBlock ReadHr()
+    {
+        var elements = ReadRowElements();
+        if (elements.Skip(3).All(e => e is PlainMarkdownContentBlockElement { Content: " "}))
+            return new HrContentBlock();
+
+        return new PlainMarkdownContentBlock { Elements = elements };
     }
 
     private bool IsTableContentDivider(TableContentBlockRow row)
@@ -325,19 +339,10 @@ public class MarkdownTokenParser
         if (Match(MarkdownTokenType.Word))
             language = Previous().Literal?.ToString();
 
-        var started = false;
-        
         while (
             !IsParseCompleted
             && !MatchSequential(MarkdownTokenType.Backtick, 3))
         {
-            if (Check(MarkdownTokenType.NewLine) && !started)
-            {
-                Advance();
-                continue;
-            }
-            
-            started = true;
             var element = ReadPlainElement();
             result.Add(element);
         }

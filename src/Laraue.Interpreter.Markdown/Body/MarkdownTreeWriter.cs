@@ -51,6 +51,9 @@ public class MarkdownTreeWriter
             case BlockquoteContentBlock blockquoteContentBlock:
                 Write(sb, blockquoteContentBlock);
                 break;
+            case HrContentBlock hrContentBlock:
+                Write(sb, hrContentBlock);
+                break;
             default:
                 throw new NotImplementedException(contentBlock.GetType().Name);
         }
@@ -253,6 +256,11 @@ public class MarkdownTreeWriter
         WriteAttribute(sb, "alt", imageElement.Alt);
         
         sb.Append(" />");
+    }
+    
+    private void Write(StringBuilder sb, HrContentBlock hrBlock)
+    {
+        sb.Append("<hr>");
     }
     
     private void Write(StringBuilder sb, NewLineElement newLineElement)

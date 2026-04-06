@@ -217,6 +217,16 @@ inside text";
         
         Assert.Equal("<h2>Blockquote</h2><blockquote><p>\"Quote Line 1<br>Quote Line 2\"</p></blockquote>", ToHtml(contentText));
     }
+    
+    [Fact]
+    public void HrBlocks_ShouldBeRendered_Always()
+    {
+        var contentText = @"Hey
+---
+Next line";
+        
+        Assert.Equal("<p>Hey</p><hr><p>Next line</p>", ToHtml(contentText));
+    }
 
     private static string ToHtml(string markdown, bool generateHeaderLinks = false)
     {
