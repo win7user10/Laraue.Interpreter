@@ -324,11 +324,20 @@ public class MarkdownTokenParser
         string? language = null;
         if (Match(MarkdownTokenType.Word))
             language = Previous().Literal?.ToString();
+
+        var started = false;
         
         while (
             !IsParseCompleted
             && !MatchSequential(MarkdownTokenType.Backtick, 3))
         {
+            if (Check(MarkdownTokenType.NewLine) && !started)
+            {
+                Advance();
+                continue;
+            }
+            
+            started = true;
             var element = ReadPlainElement();
             result.Add(element);
         }
@@ -376,7 +385,13 @@ public class MarkdownTokenParser
     private PlainMarkdownContentBlockElement ReadPlainElement()
     {
         var element = Advance();
-
+        
+        if (element.TokenType == MarkdownTokenType.NewLine)
+            return new PlainMarkdownContentBlockElement
+            {
+                Content = Environment.NewLine,
+            };
+        
         return new PlainMarkdownContentBlockElement
         {
             Content = element.Literal?.ToString() ?? element.Lexeme!,

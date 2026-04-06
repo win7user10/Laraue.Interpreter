@@ -210,10 +210,12 @@ inside text";
     [Fact]
     public void Blockquotes_ShouldBeRendered_Always()
     {
-        var contentText = @"> ""Quote Line 1
+        var contentText = @"## Blockquote
+
+> ""Quote Line 1
 > Quote Line 2""";
         
-        Assert.Equal("<blockquote><p>\"Quote Line 1<br>Quote Line 2\"</p></blockquote>", ToHtml(contentText));
+        Assert.Equal("<h2>Blockquote</h2><blockquote><p>\"Quote Line 1<br>Quote Line 2\"</p></blockquote>", ToHtml(contentText));
     }
 
     private static string ToHtml(string markdown, bool generateHeaderLinks = false)
