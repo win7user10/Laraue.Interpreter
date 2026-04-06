@@ -48,6 +48,9 @@ public class MarkdownTreeWriter
             case ListBlock orderedListBlock:
                 Write(sb, orderedListBlock);
                 break;
+            case BlockquoteContentBlock blockquoteContentBlock:
+                Write(sb, blockquoteContentBlock);
+                break;
             default:
                 throw new NotImplementedException(contentBlock.GetType().Name);
         }
@@ -152,6 +155,23 @@ public class MarkdownTreeWriter
             
         stringBuilder
             .Append($"</{tag}>");
+    }
+    
+    private void Write(StringBuilder sb, BlockquoteContentBlock blockquoteContentBlock)
+    {
+        sb.Append("<blockquote><p>");
+
+        for (var index = 0; index < blockquoteContentBlock.Elements.Count; index++)
+        {
+            var innerElement = blockquoteContentBlock.Elements[index];
+            foreach (var element in innerElement)
+                Write(sb, element);
+            
+            if (index < blockquoteContentBlock.Elements.Count - 1)
+                sb.Append("<br>");
+        }
+
+        sb.Append("</p></blockquote>");
     }
     
     private void Write(StringBuilder sb, MarkdownContentBlockElement contentBlockElement)

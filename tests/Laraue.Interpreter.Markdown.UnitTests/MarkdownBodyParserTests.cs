@@ -206,6 +206,15 @@ inside text";
 
         Assert.Equal("<p><img src=\"mountain.jpg\" alt=\"mountain\" /></p><h2>Next title</h2>", ToHtml(contentText));
     }
+    
+    [Fact]
+    public void Blockquotes_ShouldBeRendered_Always()
+    {
+        var contentText = @"> ""Quote Line 1
+> Quote Line 2""";
+        
+        Assert.Equal("<blockquote><p>\"Quote Line 1<br>Quote Line 2\"</p></blockquote>", ToHtml(contentText));
+    }
 
     private static string ToHtml(string markdown, bool generateHeaderLinks = false)
     {

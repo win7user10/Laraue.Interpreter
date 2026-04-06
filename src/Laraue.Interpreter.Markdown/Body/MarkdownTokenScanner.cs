@@ -53,6 +53,9 @@ public class MarkdownTokenScanner(string input)
             case '.':
                 AddToken(MarkdownTokenType.Dot);
                 return true;
+            case '>':
+                AddToken(MarkdownTokenType.GreaterThan);
+                return true;
             default:
                 AddWordOrNumber();
                 return true;

@@ -71,4 +71,9 @@ public enum MarkdownTokenType
     /// "."
     /// </summary>
     Dot,
+    
+    /// <summary>
+    /// ">"
+    /// </summary>
+    GreaterThan,
 }

@@ -59,6 +59,11 @@ public class MarkdownTokenParser
             },
             new ReadBlockDelegate
             {
+                IsApplicable = () => Check(MarkdownTokenType.GreaterThan),
+                Read = ReadQuote
+            },
+            new ReadBlockDelegate
+            {
                 IsApplicable = () => CheckSequential(
                     MarkdownTokenType.Number,
                     MarkdownTokenType.Dot,
@@ -116,6 +121,21 @@ public class MarkdownTokenParser
         {
             Header = rows.First(),
             Rows = rows.Skip(2).ToArray()
+        };
+    }
+    
+    private BlockquoteContentBlock ReadQuote()
+    {
+        var rows = new List<MarkdownContentBlockElement[]>();
+        while (!IsParseCompleted && Match(MarkdownTokenType.GreaterThan))
+        {
+            var elements = ReadRowElements();
+            rows.Add(elements);
+        }
+
+        return new BlockquoteContentBlock
+        {
+            Elements = rows
         };
     }
 
