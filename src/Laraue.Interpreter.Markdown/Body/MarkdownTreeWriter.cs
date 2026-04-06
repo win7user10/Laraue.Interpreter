@@ -21,7 +21,7 @@ public class MarkdownTreeWriter
     
     public string Write(MarkdownTree tree)
     {
-        var sb = new StringBuilder();
+        var sb = new IndentedStringBuilder();
         
         foreach (var contentBlock in tree.ContentBlocks)
             Write(sb, contentBlock);
@@ -29,7 +29,7 @@ public class MarkdownTreeWriter
         return sb.ToString();
     }
 
-    private void Write(StringBuilder sb, MarkdownContentBlock contentBlock)
+    private void Write(IndentedStringBuilder sb, MarkdownContentBlock contentBlock)
     {
         switch (contentBlock)
         {
@@ -59,12 +59,12 @@ public class MarkdownTreeWriter
         }
     }
     
-    private void Write(StringBuilder sb, PlainMarkdownContentBlock contentBlock)
+    private void Write(IndentedStringBuilder sb, PlainMarkdownContentBlock contentBlock)
     {
         WriteElements(sb, "p", contentBlock.Elements);
     }
     
-    private void Write(StringBuilder sb, CodeMarkdownContentBlock codeBlock)
+    private void Write(IndentedStringBuilder sb, CodeMarkdownContentBlock codeBlock)
     {
         sb.Append("<pre><code");
         
@@ -82,12 +82,8 @@ public class MarkdownTreeWriter
         sb.Append("</code></pre>");
     }
     
-    private void Write(StringBuilder sb, HeadingMarkdownContentBlock headingBlock)
+    private void Write(IndentedStringBuilder sb, HeadingMarkdownContentBlock headingBlock)
     {
-        var innerSb = new StringBuilder();
-        foreach (var innerElement in headingBlock.Elements)
-            Write(innerSb, innerElement);
-
         sb.Append($"<h{headingBlock.Level}");
         if (_options.GenerateHeaderLinks)
         {
@@ -98,13 +94,15 @@ public class MarkdownTreeWriter
                 .Append('"');
         }
 
-        sb
-            .Append('>')
-            .Append(innerSb)
-            .Append($"</h{headingBlock.Level}>");
+        sb.Append('>');
+        
+        foreach (var innerElement in headingBlock.Elements)
+            Write(sb, innerElement); 
+        
+        sb.Append($"</h{headingBlock.Level}>");
     }
     
-    private void Write(StringBuilder sb, TableContentBlock tableBlock)
+    private void Write(IndentedStringBuilder sb, TableContentBlock tableBlock)
     {
         sb
             .Append("<table>");
@@ -137,13 +135,13 @@ public class MarkdownTreeWriter
             .Append("</table>");
     }
     
-    private void Write(StringBuilder sb, ListBlock listBlock)
+    private void Write(IndentedStringBuilder sb, ListBlock listBlock)
     {
         var tag = listBlock.IsOrdered ? "ol" : "ul";
         WriteListRow(sb, listBlock.Rows, tag);
     }
 
-    private void WriteListRow(StringBuilder stringBuilder, IEnumerable<ListRow> rows, string tag)
+    private void WriteListRow(IndentedStringBuilder stringBuilder, IEnumerable<ListRow> rows, string tag)
     {
         stringBuilder
             .Append($"<{tag}>");
@@ -160,7 +158,7 @@ public class MarkdownTreeWriter
             .Append($"</{tag}>");
     }
     
-    private void Write(StringBuilder sb, BlockquoteContentBlock blockquoteContentBlock)
+    private void Write(IndentedStringBuilder sb, BlockquoteContentBlock blockquoteContentBlock)
     {
         sb.Append("<blockquote><p>");
 
@@ -177,7 +175,7 @@ public class MarkdownTreeWriter
         sb.Append("</p></blockquote>");
     }
     
-    private void Write(StringBuilder sb, MarkdownContentBlockElement contentBlockElement)
+    private void Write(IndentedStringBuilder sb, MarkdownContentBlockElement contentBlockElement)
     {
         switch (contentBlockElement)
         {
@@ -207,7 +205,7 @@ public class MarkdownTreeWriter
         }
     }
     
-    private void Write(StringBuilder sb, PlainMarkdownContentBlockElement plainElement)
+    private void Write(IndentedStringBuilder sb, PlainMarkdownContentBlockElement plainElement)
     {
         foreach (var ch in plainElement.Content)
         {
@@ -218,22 +216,22 @@ public class MarkdownTreeWriter
         }
     }
     
-    private void Write(StringBuilder sb, ItalicMarkdownContentBlockElement italicElement)
+    private void Write(IndentedStringBuilder sb, ItalicMarkdownContentBlockElement italicElement)
     {
         WriteElements(sb, "em", italicElement.InnerElements);
     }
     
-    private void Write(StringBuilder sb, BoldMarkdownContentBlockElement italicElement)
+    private void Write(IndentedStringBuilder sb, BoldMarkdownContentBlockElement italicElement)
     {
         WriteElements(sb, "b", italicElement.InnerElements);
     }
     
-    private void Write(StringBuilder sb, InlineCodeMarkdownContentBlockElement codeElement)
+    private void Write(IndentedStringBuilder sb, InlineCodeMarkdownContentBlockElement codeElement)
     {
         WriteElements(sb, "code", codeElement.InnerElements);
     }
     
-    private void Write(StringBuilder sb, LinkCodeMarkdownContentBlockElement linkElement)
+    private void Write(IndentedStringBuilder sb, LinkCodeMarkdownContentBlockElement linkElement)
     {
         sb.Append("<a");
         
@@ -247,7 +245,7 @@ public class MarkdownTreeWriter
         sb.Append("</a>");
     }
     
-    private void Write(StringBuilder sb, ImageCodeMarkdownContentBlockElement imageElement)
+    private void Write(IndentedStringBuilder sb, ImageCodeMarkdownContentBlockElement imageElement)
     {
         sb.Append("<img");
         
@@ -258,18 +256,18 @@ public class MarkdownTreeWriter
         sb.Append(" />");
     }
     
-    private void Write(StringBuilder sb, HrContentBlock hrBlock)
+    private void Write(IndentedStringBuilder sb, HrContentBlock hrBlock)
     {
         sb.Append("<hr>");
     }
     
-    private void Write(StringBuilder sb, NewLineElement newLineElement)
+    private void Write(IndentedStringBuilder sb, NewLineElement newLineElement)
     {
         sb.AppendLine();
     }
 
     private void WriteAttribute(
-        StringBuilder sb,
+        IndentedStringBuilder sb,
         string attributeName,
         string? attributeValue)
     {
@@ -280,7 +278,7 @@ public class MarkdownTreeWriter
     }
     
     private void WriteElements(
-        StringBuilder sb,
+        IndentedStringBuilder sb,
         string wrappingTag,
         IEnumerable<MarkdownContentBlockElement> elements)
     {
