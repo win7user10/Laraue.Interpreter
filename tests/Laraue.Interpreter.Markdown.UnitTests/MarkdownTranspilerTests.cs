@@ -45,13 +45,11 @@ public class MarkdownTranspilerTests
 <h2>
   Code Example
 </h2>
-<pre>
-  <code class=""javascript"">function greet(name) {
+<pre><code class=""javascript"">function greet(name) {
   return `Hello, ${name}!`;
 }
 
-console.log(greet(""world""));</code>
-</pre>
+console.log(greet(""world""));</code></pre>
 <h2>
   Blockquote
 </h2>

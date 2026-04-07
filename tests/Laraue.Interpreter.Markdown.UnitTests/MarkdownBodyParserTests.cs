@@ -341,10 +341,8 @@ var user = new User<Guid>();
 var html = ""<html><p class=""title"">Hi</html>""
 ```";
         
-        const string excepted = @"<pre>
-  <code class=""csharp"">var user = new User&lt;Guid&gt;();
-var html = ""&lt;html&gt;&lt;p class=""title""&gt;Hi&lt;/html&gt;""</code>
-</pre>";
+        const string excepted = @"<pre><code class=""csharp"">var user = new User&lt;Guid&gt;();
+var html = ""&lt;html&gt;&lt;p class=""title""&gt;Hi&lt;/html&gt;""</code></pre>";
 
         Assert.Equal(excepted, ToHtml(contentText));
     }
@@ -362,14 +360,12 @@ var html = ""&lt;html&gt;&lt;p class=""title""&gt;Hi&lt;/html&gt;""</code>
 ]
 ```";
         
-        const string excepted = @"<pre>
-  <code class=""json"">[
+        const string excepted = @"<pre><code class=""json"">[
  [
   ""Cell1"",
   ""Cell2""
  ]
-]</code>
-</pre>";
+]</code></pre>";
 
         Assert.Equal(excepted, ToHtml(contentText));
     }

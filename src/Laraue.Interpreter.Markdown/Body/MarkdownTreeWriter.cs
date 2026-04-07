@@ -72,24 +72,20 @@ public class MarkdownTreeWriter
     {
         sb.Append("<pre>");
         
-        sb.WithIdent(inner =>
-        {
-            inner.Append("<code");
-            if (codeBlock.Language != null)
-                inner
-                    .Append(" class=\"")
-                    .Append(codeBlock.Language)
-                    .Append('\"');
+        sb.Append("<code");
+        if (codeBlock.Language != null)
+            sb
+                .Append(" class=\"")
+                .Append(codeBlock.Language)
+                .Append('\"');
 
-            inner.Append('>');
+        sb.Append('>');
         
-            foreach (var innerElement in codeBlock.Elements)
-                Write(inner, innerElement);
+        foreach (var innerElement in codeBlock.Elements)
+            Write(sb, innerElement);
             
-            inner.Append("</code>");
-        });
-
-        sb.AppendNewLine("</pre>");
+        sb.Append("</code>");
+        sb.Append("</pre>");
     }
     
     private void Write(IndentedStringBuilder sb, HeadingMarkdownContentBlock headingBlock)
