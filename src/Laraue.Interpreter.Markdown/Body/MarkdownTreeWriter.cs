@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Laraue.Interpreter.Markdown.Body.BlockElements;
+﻿using Laraue.Interpreter.Markdown.Body.BlockElements;
 using Laraue.Interpreter.Markdown.Body.Blocks;
 
 namespace Laraue.Interpreter.Markdown.Body;
@@ -22,9 +21,14 @@ public class MarkdownTreeWriter
     public string Write(MarkdownTree tree)
     {
         var sb = new IndentedStringBuilder();
-        
-        foreach (var contentBlock in tree.ContentBlocks)
+
+        for (var index = 0; index < tree.ContentBlocks.Length; index++)
+        {
+            var contentBlock = tree.ContentBlocks[index];
             Write(sb, contentBlock);
+            if (index < tree.ContentBlocks.Length - 1)
+                sb.AppendNewLine();
+        }
 
         return sb.ToString();
     }
@@ -66,20 +70,26 @@ public class MarkdownTreeWriter
     
     private void Write(IndentedStringBuilder sb, CodeMarkdownContentBlock codeBlock)
     {
-        sb.Append("<pre><code");
+        sb.Append("<pre>");
         
-        if (codeBlock.Language != null)
-            sb
-                .Append(" class=\"")
-                .Append(codeBlock.Language)
-                .Append('\"');
+        sb.WithIdent(inner =>
+        {
+            inner.Append("<code");
+            if (codeBlock.Language != null)
+                inner
+                    .Append(" class=\"")
+                    .Append(codeBlock.Language)
+                    .Append('\"');
 
-        sb.Append('>');
+            inner.Append('>');
         
-        foreach (var innerElement in codeBlock.Elements)
-            Write(sb, innerElement);
+            foreach (var innerElement in codeBlock.Elements)
+                Write(inner, innerElement);
+            
+            inner.Append("</code>");
+        });
 
-        sb.Append("</code></pre>");
+        sb.AppendNewLine("</pre>");
     }
     
     private void Write(IndentedStringBuilder sb, HeadingMarkdownContentBlock headingBlock)
@@ -93,46 +103,77 @@ public class MarkdownTreeWriter
                 .Append(heading.Id)
                 .Append('"');
         }
-
+        
         sb.Append('>');
         
-        foreach (var innerElement in headingBlock.Elements)
-            Write(sb, innerElement); 
+        sb.WithIdent(inner =>
+        {
+            foreach (var innerElement in headingBlock.Elements)
+                Write(inner, innerElement); 
+        });
         
-        sb.Append($"</h{headingBlock.Level}>");
+        sb.AppendNewLine($"</h{headingBlock.Level}>");
     }
     
     private void Write(IndentedStringBuilder sb, TableContentBlock tableBlock)
     {
-        sb
-            .Append("<table>");
+        sb.Append("<table>");
 
-        if (tableBlock.Header is not null)
+        sb.WithIdent(tableBuilder =>
         {
-            sb.Append("<thead>")
-                .Append("<tr>");
-
-            foreach (var row in tableBlock.Header.Cells)
-                WriteElements(sb, "th", row.Elements);
-
-            sb
-                .Append("</tr>")
-                .Append("</thead>");
-        }
+            if (tableBlock.Header is not null)
+            {
+                tableBuilder.Append("<thead>");
+                tableBuilder.WithIdent(headBuilder =>
+                {
+                    headBuilder.Append("<tr>");
+                    headBuilder.WithIdent(rowBuilder =>
+                    {
+                        for (var index = 0; index < tableBlock.Header.Cells.Length; index++)
+                        {
+                            var row = tableBlock.Header.Cells[index];
+                            WriteElements(rowBuilder, "th", row.Elements);
+                            if (index < tableBlock.Header.Cells.Length - 1)
+                                rowBuilder.AppendNewLine();
+                        }
+                    });
+                    
+                    headBuilder.AppendNewLine("</tr>");
+                });
+                
+                tableBuilder
+                    .AppendNewLine("</thead>")
+                    .AppendNewLine();
+            }
         
-        sb.Append("<tbody>");
+            tableBuilder.Append("<tbody>");
+            tableBuilder.WithIdent(bodyBuilder =>
+            {
+                for (var i = 0; i < tableBlock.Rows.Length; i++)
+                {
+                    var row = tableBlock.Rows[i];
+                    bodyBuilder.Append("<tr>");
+                    bodyBuilder.WithIdent(rowBuilder =>
+                    {
+                        for (var index = 0; index < row.Cells.Length; index++)
+                        {
+                            var cell = row.Cells[index];
+                            WriteElements(rowBuilder, "td", cell.Elements);
+                            if (index < row.Cells.Length - 1)
+                                rowBuilder.AppendNewLine();
+                        }
+                    });
 
-        foreach (var row in tableBlock.Rows)
-        {
-            sb.Append("<tr>");
-            foreach (var cell in row.Cells)
-                WriteElements(sb, "td", cell.Elements);
-            sb.Append("</tr>");
-        }
+                    bodyBuilder.AppendNewLine("</tr>");
+                    if (i < tableBlock.Rows.Length - 1)
+                        bodyBuilder.AppendNewLine();
+                }
+            });
+            
+            sb.AppendNewLine("</tbody>");
+        });
         
-        sb
-            .Append("</tbody>")
-            .Append("</table>");
+        sb.AppendNewLine("</table>");
     }
     
     private void Write(IndentedStringBuilder sb, ListBlock listBlock)
@@ -141,38 +182,61 @@ public class MarkdownTreeWriter
         WriteListRow(sb, listBlock.Rows, tag);
     }
 
-    private void WriteListRow(IndentedStringBuilder stringBuilder, IEnumerable<ListRow> rows, string tag)
+    private void WriteListRow(IndentedStringBuilder stringBuilder, IReadOnlyCollection<ListRow> rows, string tag)
     {
         stringBuilder
             .Append($"<{tag}>");
 
-        foreach (var row in rows)
+        stringBuilder.WithIdent(inner =>
         {
-            if (row.Elements.Length > 0)
-                WriteElements(stringBuilder, "li", row.Elements);
-            if (row.Children.Count > 0)
-                WriteListRow(stringBuilder, row.Children, tag);
-        }
+            for (var index = 0; index < rows.Count; index++)
+            {
+                var row = rows.ElementAt(index);
+                if (row.Elements.Length > 0)
+                {
+                    WriteElements(inner, "li", row.Elements);
+                    if (index < rows.Count - 1)
+                        inner.AppendNewLine();
+                }
+
+                if (row.Children.Count > 0)
+                {
+                    inner.AppendNewLine();
+                    WriteListRow(inner, row.Children, tag);
+                    if (index < rows.Count - 1)
+                        inner.AppendNewLine();
+                }
+                
+            }
+        });
             
         stringBuilder
-            .Append($"</{tag}>");
+            .AppendNewLine($"</{tag}>");
     }
     
     private void Write(IndentedStringBuilder sb, BlockquoteContentBlock blockquoteContentBlock)
     {
-        sb.Append("<blockquote><p>");
+        sb.Append("<blockquote>");
 
-        for (var index = 0; index < blockquoteContentBlock.Elements.Count; index++)
+        sb.WithIdent(inner =>
         {
-            var innerElement = blockquoteContentBlock.Elements[index];
-            foreach (var element in innerElement)
-                Write(sb, element);
+            inner.Append("<p>");
+            inner.WithIdent(subInner =>
+            {
+                for (var index = 0; index < blockquoteContentBlock.Elements.Count; index++)
+                {
+                    var innerElement = blockquoteContentBlock.Elements[index];
+                    foreach (var element in innerElement)
+                        Write(subInner, element);
             
-            if (index < blockquoteContentBlock.Elements.Count - 1)
-                sb.Append("<br>");
-        }
-
-        sb.Append("</p></blockquote>");
+                    if (index < blockquoteContentBlock.Elements.Count - 1)
+                        subInner.Append("<br>");
+                }
+            });
+            inner.AppendNewLine("</p>");
+        });
+        
+        sb.AppendNewLine("</blockquote>");
     }
     
     private void Write(IndentedStringBuilder sb, MarkdownContentBlockElement contentBlockElement)
@@ -234,25 +298,25 @@ public class MarkdownTreeWriter
     private void Write(IndentedStringBuilder sb, LinkCodeMarkdownContentBlockElement linkElement)
     {
         sb.Append("<a");
-        
+
         WriteAttribute(sb, "href", linkElement.Href);
-        
+
         sb.Append('>');
-        
+
         foreach (var innerElement in linkElement.Link)
             Write(sb, innerElement);
-        
+
         sb.Append("</a>");
     }
     
     private void Write(IndentedStringBuilder sb, ImageCodeMarkdownContentBlockElement imageElement)
     {
         sb.Append("<img");
-        
+
         WriteAttribute(sb, "src", imageElement.Src);
         WriteAttribute(sb, "title", imageElement.Title);
         WriteAttribute(sb, "alt", imageElement.Alt);
-        
+
         sb.Append(" />");
     }
     
@@ -263,7 +327,7 @@ public class MarkdownTreeWriter
     
     private void Write(IndentedStringBuilder sb, NewLineElement newLineElement)
     {
-        sb.AppendLine();
+        sb.AppendNewLine();
     }
 
     private void WriteAttribute(
@@ -276,17 +340,27 @@ public class MarkdownTreeWriter
                 .Append(attributeValue)
                 .Append('"');
     }
-    
+
     private void WriteElements(
         IndentedStringBuilder sb,
         string wrappingTag,
         IEnumerable<MarkdownContentBlockElement> elements)
     {
+        var elementsArray = elements.ToArray();
+        
         sb.Append($"<{wrappingTag}>");
-
-        foreach (var innerElement in elements)
-            Write(sb, innerElement);
-
-        sb.Append($"</{wrappingTag}>");
+        if (elementsArray.Length == 0)
+        {
+            sb.Append($"</{wrappingTag}>");
+            return;
+        }
+        
+        sb.WithIdent(ident =>
+        {
+            foreach (var innerElement in elementsArray)
+                Write(ident, innerElement);
+        });
+            
+        sb.AppendNewLine($"</{wrappingTag}>");
     }
 }

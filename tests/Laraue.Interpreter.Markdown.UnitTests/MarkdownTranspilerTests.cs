@@ -7,6 +7,117 @@ public class MarkdownTranspilerTests
 {
     private static readonly string NewLine = Environment.NewLine;
     
+    const string TranspiledExcepted = @"<h1>
+  The Quick Brown Fox
+</h1>
+<p>
+  Welcome to the <b>
+    Markdown to HTML Converter
+  </b> by Laraue Software.
+</p>
+<h2>
+  Features
+</h2>
+<ul>
+  <li>
+    <em>
+      Live preview
+    </em> as you type
+  </li>
+  <li>
+    Toggle between <b>
+      Rendered
+    </b> view and <b>
+      HTML source
+    </b>
+  </li>
+  <li>
+    One-click templates via the toolbar chips
+  </li>
+  <li>
+    <b>
+      Copy
+    </b> or <b>
+      Download
+    </b> the generated HTML
+  </li>
+</ul>
+<h2>
+  Code Example
+</h2>
+<pre>
+  <code class=""javascript"">function greet(name) {
+  return `Hello, ${name}!`;
+}
+
+console.log(greet(""world""));</code>
+</pre>
+<h2>
+  Blockquote
+</h2>
+<blockquote>
+  <p>
+    ""Any fool can write code that a computer can understand.<br>Good programmers write code that humans can understand.""<br>— Martin Fowler
+  </p>
+</blockquote>
+<h2>
+  Table
+</h2>
+<table>
+  <thead>
+    <tr>
+      <th>
+        Language
+      </th>
+      <th>
+        Paradigm
+      </th>
+      <th>
+        Year
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        C#
+      </td>
+      <td>
+        OOP / FP
+      </td>
+      <td>
+        2000
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Python
+      </td>
+      <td>
+        Multi
+      </td>
+      <td>
+        1991
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Rust
+      </td>
+      <td>
+        Systems
+      </td>
+      <td>
+        2010
+      </td>
+    </tr>
+  </tbody>
+</table>
+<hr>
+<p>
+  Made with ❤️ by <a href=""https://laraue.com"">Laraue Software</a>
+</p>";
+    
     [Fact]
     public void Transpile_ShouldReturnHeadersAndContent_WhenHeadersExist()
     {
@@ -78,7 +189,7 @@ Made with ❤️ by [Laraue Software](https://laraue.com)";
             3,
             "unitTestArticle");
         
-        Assert.Equal($"<h1>The Quick Brown Fox</h1><p>Welcome to the <b>Markdown to HTML Converter</b> by Laraue Software.</p><h2>Features</h2><ul><li><em>Live preview</em> as you type</li><li>Toggle between <b>Rendered</b> view and <b>HTML source</b></li><li>One-click templates via the toolbar chips</li><li><b>Copy</b> or <b>Download</b> the generated HTML</li></ul><h2>Code Example</h2><pre><code class=\"javascript\">function greet(name) {{{NewLine}  return `Hello, ${{name}}!`;{NewLine}}}{NewLine}{NewLine}console.log(greet(\"world\"));</code></pre><h2>Blockquote</h2><blockquote><p>\"Any fool can write code that a computer can understand.<br>Good programmers write code that humans can understand.\"<br>— Martin Fowler</p></blockquote><h2>Table</h2><table><thead><tr><th>Language</th><th>Paradigm</th><th>Year</th></tr></thead><tbody><tr><td>C#</td><td>OOP / FP</td><td>2000</td></tr><tr><td>Python</td><td>Multi</td><td>1991</td></tr><tr><td>Rust</td><td>Systems</td><td>2010</td></tr></tbody></table><hr><p>Made with ❤️ by <a href=\"https://laraue.com\">Laraue Software</a></p>", result.HtmlContent);
+        Assert.Equal(TranspiledExcepted, result.HtmlContent);
     }
 
     [Fact]
@@ -91,7 +202,7 @@ Made with ❤️ by [Laraue Software](https://laraue.com)";
         
         var result = new MarkdownTranspiler().ToHtml(deserialized.Content);
         
-        Assert.Equal($"<h1>The Quick Brown Fox</h1><p>Welcome to the <b>Markdown to HTML Converter</b> by Laraue Software.</p><h2>Features</h2><ul><li><em>Live preview</em> as you type</li><li>Toggle between <b>Rendered</b> view and <b>HTML source</b></li><li>One-click templates via the toolbar chips</li><li><b>Copy</b> or <b>Download</b> the generated HTML</li></ul><h2>Code Example</h2><pre><code class=\"javascript\">function greet(name) {{{NewLine}  return `Hello, ${{name}}!`;{NewLine}}}{NewLine}{NewLine}console.log(greet(\"world\"));</code></pre><h2>Blockquote</h2><blockquote><p>\"Any fool can write code that a computer can understand.<br>Good programmers write code that humans can understand.\"<br>— Martin Fowler</p></blockquote><h2>Table</h2><table><thead><tr><th>Language</th><th>Paradigm</th><th>Year</th></tr></thead><tbody><tr><td>C#</td><td>OOP / FP</td><td>2000</td></tr><tr><td>Python</td><td>Multi</td><td>1991</td></tr><tr><td>Rust</td><td>Systems</td><td>2010</td></tr></tbody></table><hr><p>Made with ❤️ by <a href=\"https://laraue.com\">Laraue Software</a></p>", result.HtmlContent);
+        Assert.Equal(TranspiledExcepted, result.HtmlContent);
     }
 
     [Fact]
@@ -101,8 +212,12 @@ Made with ❤️ by [Laraue Software](https://laraue.com)";
 
         var result = new MarkdownTranspiler().ToHtml(markdownFile);
         
+        const string excepted = @"<p>
+  Only content
+</p>";
+        
         Assert.Empty(result.Headers);
-        Assert.Equal("<p>Only content</p>", result.HtmlContent);
+        Assert.Equal(excepted, result.HtmlContent);
     }
 
     public class SerializedObject

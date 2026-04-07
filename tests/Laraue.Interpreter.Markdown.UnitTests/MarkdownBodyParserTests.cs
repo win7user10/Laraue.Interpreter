@@ -6,14 +6,16 @@ namespace Laraue.Interpreter.Markdown.UnitTests;
 
 public class MarkdownBodyParserTests
 {
-    private static readonly string NewLine = Environment.NewLine;
-    
     [Fact]
     public void MarkdownWithoutSettings_ShouldBeRendered_Always()
     {
         var contentText = "hi";
 
-        Assert.Equal("<p>hi</p>", ToHtml(contentText));
+        const string excepted = @"<p>
+  hi
+</p>";
+
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
@@ -23,8 +25,39 @@ public class MarkdownBodyParserTests
 | --- | --- |
 | Henry | 15 |
 | Alex | 17 |";
+        
+        const string excepted = @"<table>
+  <thead>
+    <tr>
+      <th>
+        Name
+      </th>
+      <th>
+        Age
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        Henry
+      </td>
+      <td>
+        15
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Alex
+      </td>
+      <td>
+        17
+      </td>
+    </tr>
+  </tbody>
+</table>";
 
-        Assert.Equal("<table><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr><td>Henry</td><td>15</td></tr><tr><td>Alex</td><td>17</td></tr></tbody></table>", ToHtml(contentText));
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
@@ -33,8 +66,27 @@ public class MarkdownBodyParserTests
         var contentText = @"|                   |                   |
 |-------------------|-------------------|
 | Cell 1 | Cell 2 | ";
+        
+        const string excepted = @"<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        Cell 1
+      </td>
+      <td>
+        Cell 2
+      </td>
+    </tr>
+  </tbody>
+</table>";
 
-        Assert.Equal("<table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Cell 1</td><td>Cell 2</td></tr></tbody></table>", ToHtml(contentText));
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
@@ -45,7 +97,38 @@ public class MarkdownBodyParserTests
 | John | No link |
 | Henry | ![mountain](mountain.jpg) |";
 
-        Assert.Equal("<table><thead><tr><th>Name</th><th>Link</th></tr></thead><tbody><tr><td>John</td><td>No link</td></tr><tr><td>Henry</td><td><img src=\"mountain.jpg\" alt=\"mountain\" /></td></tr></tbody></table>", ToHtml(contentText));
+        const string excepted = @"<table>
+  <thead>
+    <tr>
+      <th>
+        Name
+      </th>
+      <th>
+        Link
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        John
+      </td>
+      <td>
+        No link
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Henry
+      </td>
+      <td>
+        <img src=""mountain.jpg"" alt=""mountain"" />
+      </td>
+    </tr>
+  </tbody>
+</table>";
+        
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
@@ -54,8 +137,22 @@ public class MarkdownBodyParserTests
         var contentText = @"1. Item #1
 1. Item #2
     1. Item #3";
+        
+        const string excepted = @"<ol>
+  <li>
+    Item #1
+  </li>
+  <li>
+    Item #2
+  </li>
+  <ol>
+    <li>
+      Item #3
+    </li>
+  </ol>
+</ol>";
 
-        Assert.Equal("<ol><li>Item #1</li><li>Item #2</li><ol><li>Item #3</li></ol></ol>", ToHtml(contentText));
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
@@ -67,8 +164,23 @@ Description [link](http://test_1.com)
 
 ## [Heading](https://test.com)
 And text";
+        
+        const string excepted = @"<ol>
+  <li>
+    Item #1 Description <a href=""http://test_1.com"">link</a>
+  </li>
+  <li>
+    Item #2
+  </li>
+</ol>
+<h2 id=""heading"">
+  <a href=""https://test.com"">Heading</a>
+</h2>
+<p>
+  And text
+</p>";
 
-        Assert.Equal("<ol><li>Item #1 Description <a href=\"http://test_1.com\">link</a></li><li>Item #2</li></ol><h2 id=\"heading\"><a href=\"https://test.com\">Heading</a></h2><p>And text</p>", ToHtml(contentText, generateHeaderLinks: true));
+        Assert.Equal(excepted, ToHtml(contentText, generateHeaderLinks: true));
     }
     
     [Fact]
@@ -79,8 +191,28 @@ And text";
 Hi
     - Item #3
         - Item #4";
+        
+        const string excepted = @"<ul>
+  <li>
+    Item #1
+  </li>
+  <li>
+    Item #2
+    Hi
+  </li>
+  <ul>
+    <li>
+      Item #3
+    </li>
+    <ul>
+      <li>
+        Item #4
+      </li>
+    </ul>
+  </ul>
+</ul>";
 
-        Assert.Equal($"<ul><li>Item #1</li><li>Item #2{NewLine}Hi</li><ul><li>Item #3</li><ul><li>Item #4</li></ul></ul></ul>", ToHtml(contentText));
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Theory]
@@ -88,7 +220,13 @@ Hi
     [InlineData("Hi, *Ann*")]
     public void ItalicItems_ShouldBeRendered_Always(string text)
     {
-        Assert.Equal("<p>Hi, <em>Ann</em></p>", ToHtml(text));
+        const string excepted = @"<p>
+  Hi, <em>
+    Ann
+  </em>
+</p>";
+      
+        Assert.Equal(excepted, ToHtml(text));
     }
     
     [Theory]
@@ -96,7 +234,13 @@ Hi
     [InlineData("Hi, **Ann**")]
     public void BoldItems_ShouldBeRendered_Always(string text)
     {
-        Assert.Equal("<p>Hi, <b>Ann</b></p>", ToHtml(text));
+        const string excepted = @"<p>
+  Hi, <b>
+    Ann
+  </b>
+</p>";
+      
+        Assert.Equal(excepted, ToHtml(text));
     }
     
     [Fact]
@@ -106,7 +250,23 @@ Hi
 1. **First:** item
 2. **Second:** item";
         
-        Assert.Equal("<p>List title</p><ol><li><b>First:</b> item</li><li><b>Second:</b> item</li></ol>", ToHtml(contentText));
+        const string excepted = @"<p>
+  List title
+</p>
+<ol>
+  <li>
+    <b>
+      First:
+    </b> item
+  </li>
+  <li>
+    <b>
+      Second:
+    </b> item
+  </li>
+</ol>";
+        
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
@@ -115,7 +275,16 @@ Hi
         var contentText = @"**Hey, guys**  
 I am here";
         
-        Assert.Equal($"<p><b>Hey, guys</b></p><p>I am here</p>", ToHtml(contentText));
+        const string excepted = @"<p>
+  <b>
+    Hey, guys
+  </b>
+</p>
+<p>
+  I am here
+</p>";
+        
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
@@ -125,7 +294,16 @@ I am here";
 
 I am here";
         
-        Assert.Equal("<p><b>Hey, guys</b></p><p>I am here</p>", ToHtml(contentText));
+        const string excepted = @"<p>
+  <b>
+    Hey, guys
+  </b>
+</p>
+<p>
+  I am here
+</p>";
+        
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
@@ -133,16 +311,26 @@ I am here";
     {
         var contentText = @"Hello guys,
 and girls";
+        
+        const string excepted = @"<p>
+  Hello guys, and girls
+</p>";
 
-        Assert.Equal("<p>Hello guys, and girls</p>", ToHtml(contentText));
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
     public void InlineCode_ShouldBeRendered_Always()
     {
         var contentText = "This is `string[] Tags` inline code";
+        
+        const string excepted = @"<p>
+  This is <code>
+    string[] Tags
+  </code> inline code
+</p>";
 
-        Assert.Equal("<p>This is <code>string[] Tags</code> inline code</p>", ToHtml(contentText));
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
@@ -152,8 +340,13 @@ and girls";
 var user = new User<Guid>();
 var html = ""<html><p class=""title"">Hi</html>""
 ```";
+        
+        const string excepted = @"<pre>
+  <code class=""csharp"">var user = new User&lt;Guid&gt;();
+var html = ""&lt;html&gt;&lt;p class=""title""&gt;Hi&lt;/html&gt;""</code>
+</pre>";
 
-        Assert.Equal($"<pre><code class=\"csharp\">var user = new User&lt;Guid&gt;();{NewLine}var html = \"&lt;html&gt;&lt;p class=\"title\"&gt;Hi&lt;/html&gt;\"</code></pre>", ToHtml(contentText));
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     
@@ -168,8 +361,17 @@ var html = ""<html><p class=""title"">Hi</html>""
  ]
 ]
 ```";
+        
+        const string excepted = @"<pre>
+  <code class=""json"">[
+ [
+  ""Cell1"",
+  ""Cell2""
+ ]
+]</code>
+</pre>";
 
-        Assert.Equal($"<pre><code class=\"json\">[{NewLine} [{NewLine}  \"Cell1\",{NewLine}  \"Cell2\"{NewLine} ]{NewLine}]</code></pre>", ToHtml(contentText));
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
@@ -177,8 +379,12 @@ var html = ""<html><p class=""title"">Hi</html>""
     {
         var contentText = @"The [link](https://google.com/page1.html)
 inside text"; 
+        
+        const string excepted = @"<p>
+  The <a href=""https://google.com/page1.html"">link</a> inside text
+</p>";
 
-        Assert.Equal("<p>The <a href=\"https://google.com/page1.html\">link</a> inside text</p>", ToHtml(contentText));
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
@@ -186,16 +392,24 @@ inside text";
     {
         var contentText = @"![Big mountain](/assets/mountain.jpg ""Everest"")
 ![Small mountain](/assets/mini-mountain.jpg ""Elbrus"")";
+        
+        const string excepted = @"<p>
+  <img src=""/assets/mountain.jpg"" title=""Everest"" alt=""Big mountain"" /> <img src=""/assets/mini-mountain.jpg"" title=""Elbrus"" alt=""Small mountain"" />
+</p>";
 
-        Assert.Equal("<p><img src=\"/assets/mountain.jpg\" title=\"Everest\" alt=\"Big mountain\" /> <img src=\"/assets/mini-mountain.jpg\" title=\"Elbrus\" alt=\"Small mountain\" /></p>", ToHtml(contentText));
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
     public void ImageWithLink_ShouldBeRendered_Always()
     {
         var contentText = @"[![Big mountain](/assets/mountain.jpg ""Everest"")](http://link)";
+        
+        const string excepted = @"<p>
+  <a href=""http://link""><img src=""/assets/mountain.jpg"" title=""Everest"" alt=""Big mountain"" /></a>
+</p>";
 
-        Assert.Equal("<p><a href=\"http://link\"><img src=\"/assets/mountain.jpg\" title=\"Everest\" alt=\"Big mountain\" /></a></p>", ToHtml(contentText));
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
@@ -204,7 +418,14 @@ inside text";
         var contentText = @"![mountain](mountain.jpg)
 ## Next title";
 
-        Assert.Equal("<p><img src=\"mountain.jpg\" alt=\"mountain\" /></p><h2>Next title</h2>", ToHtml(contentText));
+        const string excepted = @"<p>
+  <img src=""mountain.jpg"" alt=""mountain"" />
+</p>
+<h2>
+  Next title
+</h2>";
+
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
@@ -215,7 +436,16 @@ inside text";
 > ""Quote Line 1
 > Quote Line 2""";
         
-        Assert.Equal("<h2>Blockquote</h2><blockquote><p>\"Quote Line 1<br>Quote Line 2\"</p></blockquote>", ToHtml(contentText));
+        const string excepted = @"<h2>
+  Blockquote
+</h2>
+<blockquote>
+  <p>
+    ""Quote Line 1<br>Quote Line 2""
+  </p>
+</blockquote>";
+        
+        Assert.Equal(excepted, ToHtml(contentText));
     }
     
     [Fact]
@@ -225,7 +455,15 @@ inside text";
 ---
 Next line";
         
-        Assert.Equal("<p>Hey</p><hr><p>Next line</p>", ToHtml(contentText));
+        const string excepted = @"<p>
+  Hey
+</p>
+<hr>
+<p>
+  Next line
+</p>";
+        
+        Assert.Equal(excepted, ToHtml(contentText));
     }
 
     private static string ToHtml(string markdown, bool generateHeaderLinks = false)
