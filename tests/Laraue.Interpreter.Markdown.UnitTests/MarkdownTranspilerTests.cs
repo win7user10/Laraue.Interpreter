@@ -166,7 +166,7 @@ console.log(greet(""world""));
 
 Made with ❤️ by [Laraue Software](https://laraue.com)";
 
-        var result = new MarkdownTranspiler().ToHtml(markdownFile);
+        var result = ToHtml(markdownFile);
         var headers = result.Headers;
         
         Assert.Equal(3, headers.Length);
@@ -200,7 +200,7 @@ Made with ❤️ by [Laraue Software](https://laraue.com)";
 
         var deserialized = JsonSerializer.Deserialize<SerializedObject>(source)!;
         
-        var result = new MarkdownTranspiler().ToHtml(deserialized.Content);
+        var result = ToHtml(deserialized.Content);
         
         Assert.Equal(TranspiledExcepted, result.HtmlContent);
     }
@@ -210,7 +210,7 @@ Made with ❤️ by [Laraue Software](https://laraue.com)";
     {
         const string markdownFile = "Only content";
 
-        var result = new MarkdownTranspiler().ToHtml(markdownFile);
+        var result = ToHtml(markdownFile);
         
         const string excepted = @"<p>
   Only content
@@ -218,6 +218,19 @@ Made with ❤️ by [Laraue Software](https://laraue.com)";
         
         Assert.Empty(result.Headers);
         Assert.Equal(excepted, result.HtmlContent);
+    }
+
+    private MarkdownTranspileResult ToHtml(string content)
+    {
+      var result = new MarkdownTranspiler()
+        .ToHtml(content);
+
+      return new MarkdownTranspileResult
+      {
+          Headers = result.Headers,
+          HtmlContent = result.HtmlContent.Replace("\r\n", Environment.NewLine),
+          InnerLinks = result.InnerLinks,
+      };
     }
 
     public class SerializedObject
