@@ -476,6 +476,13 @@ Next line";
         var parseResult = parser.Parse();
         parseResult.ThrowOnAnyError();
 
-        return new MarkdownTreeWriter(new WriteOptions{ GenerateHeaderLinks = generateHeaderLinks}).Write(parseResult.Result!);
+        var result = new MarkdownTreeWriter(
+          new WriteOptions
+          {
+            GenerateHeaderLinks = generateHeaderLinks
+          })
+          .Write(parseResult.Result!);
+
+        return result.Replace("\r\n", Environment.NewLine);
     }
 }
