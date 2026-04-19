@@ -65,7 +65,7 @@ public class MarkdownTreeWriter
     
     private void Write(IndentedStringBuilder sb, PlainMarkdownContentBlock contentBlock)
     {
-        WriteElements(sb, "p", contentBlock.Elements);
+        WriteElements(sb, "p", addIdent: true, contentBlock.Elements);
     }
     
     private void Write(IndentedStringBuilder sb, CodeMarkdownContentBlock codeBlock)
@@ -128,7 +128,7 @@ public class MarkdownTreeWriter
                         for (var index = 0; index < tableBlock.Header.Cells.Length; index++)
                         {
                             var row = tableBlock.Header.Cells[index];
-                            WriteElements(rowBuilder, "th", row.Elements);
+                            WriteElements(rowBuilder, "th", addIdent: true, row.Elements);
                             if (index < tableBlock.Header.Cells.Length - 1)
                                 rowBuilder.AppendNewLine();
                         }
@@ -154,7 +154,7 @@ public class MarkdownTreeWriter
                         for (var index = 0; index < row.Cells.Length; index++)
                         {
                             var cell = row.Cells[index];
-                            WriteElements(rowBuilder, "td", cell.Elements);
+                            WriteElements(rowBuilder, "td", addIdent: true, cell.Elements);
                             if (index < row.Cells.Length - 1)
                                 rowBuilder.AppendNewLine();
                         }
@@ -190,7 +190,7 @@ public class MarkdownTreeWriter
                 var row = rows.ElementAt(index);
                 if (row.Elements.Length > 0)
                 {
-                    WriteElements(inner, "li", row.Elements);
+                    WriteElements(inner, "li", addIdent: true, row.Elements);
                     if (index < rows.Count - 1)
                         inner.AppendNewLine();
                 }
@@ -278,17 +278,17 @@ public class MarkdownTreeWriter
     
     private void Write(IndentedStringBuilder sb, ItalicMarkdownContentBlockElement italicElement)
     {
-        WriteElements(sb, "em", italicElement.InnerElements);
+        WriteElements(sb, "em", addIdent: false, italicElement.InnerElements);
     }
     
     private void Write(IndentedStringBuilder sb, BoldMarkdownContentBlockElement italicElement)
     {
-        WriteElements(sb, "b", italicElement.InnerElements);
+        WriteElements(sb, "b", addIdent: false, italicElement.InnerElements);
     }
     
     private void Write(IndentedStringBuilder sb, InlineCodeMarkdownContentBlockElement codeElement)
     {
-        WriteElements(sb, "code", codeElement.InnerElements);
+        WriteElements(sb, "code", addIdent: false, codeElement.InnerElements);
     }
     
     private void Write(IndentedStringBuilder sb, LinkCodeMarkdownContentBlockElement linkElement)
@@ -340,6 +340,7 @@ public class MarkdownTreeWriter
     private void WriteElements(
         IndentedStringBuilder sb,
         string wrappingTag,
+        bool addIdent,
         IEnumerable<MarkdownContentBlockElement> elements)
     {
         var elementsArray = elements.ToArray();
@@ -350,13 +351,23 @@ public class MarkdownTreeWriter
             sb.Append($"</{wrappingTag}>");
             return;
         }
-        
-        sb.WithIdent(ident =>
+
+        if (addIdent)
+        {
+            sb.WithIdent(ident =>
+            {
+                foreach (var innerElement in elementsArray)
+                    Write(ident, innerElement);
+            });
+            
+            sb.AppendNewLine($"</{wrappingTag}>");
+        }
+        else
         {
             foreach (var innerElement in elementsArray)
-                Write(ident, innerElement);
-        });
+                Write(sb, innerElement);
             
-        sb.AppendNewLine($"</{wrappingTag}>");
+            sb.Append($"</{wrappingTag}>");
+        }
     }
 }

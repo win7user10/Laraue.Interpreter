@@ -11,35 +11,23 @@ public class MarkdownTranspilerTests
   The Quick Brown Fox
 </h1>
 <p>
-  Welcome to the <b>
-    Markdown to HTML Converter
-  </b> by Laraue Software.
+  Welcome to the <b>Markdown to HTML Converter</b> by Laraue Software.
 </p>
 <h2>
   Features
 </h2>
 <ul>
   <li>
-    <em>
-      Live preview
-    </em> as you type
+    <em>Live preview</em> as you type
   </li>
   <li>
-    Toggle between <b>
-      Rendered
-    </b> view and <b>
-      HTML source
-    </b>
+    Toggle between <b>Rendered</b> view and <b>HTML source</b>
   </li>
   <li>
     One-click templates via the toolbar chips
   </li>
   <li>
-    <b>
-      Copy
-    </b> or <b>
-      Download
-    </b> the generated HTML
+    <b>Copy</b> or <b>Download</b> the generated HTML
   </li>
 </ul>
 <h2>

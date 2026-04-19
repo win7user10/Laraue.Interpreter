@@ -221,9 +221,7 @@ Hi
     public void ItalicItems_ShouldBeRendered_Always(string text)
     {
         const string excepted = @"<p>
-  Hi, <em>
-    Ann
-  </em>
+  Hi, <em>Ann</em>
 </p>";
       
         Assert.Equal(excepted, ToHtml(text));
@@ -235,9 +233,7 @@ Hi
     public void BoldItems_ShouldBeRendered_Always(string text)
     {
         const string excepted = @"<p>
-  Hi, <b>
-    Ann
-  </b>
+  Hi, <b>Ann</b>
 </p>";
       
         Assert.Equal(excepted, ToHtml(text));
@@ -255,14 +251,10 @@ Hi
 </p>
 <ol>
   <li>
-    <b>
-      First:
-    </b> item
+    <b>First:</b> item
   </li>
   <li>
-    <b>
-      Second:
-    </b> item
+    <b>Second:</b> item
   </li>
 </ol>";
         
@@ -276,9 +268,7 @@ Hi
 I am here";
         
         const string excepted = @"<p>
-  <b>
-    Hey, guys
-  </b>
+  <b>Hey, guys</b>
 </p>
 <p>
   I am here
@@ -295,9 +285,7 @@ I am here";
 I am here";
         
         const string excepted = @"<p>
-  <b>
-    Hey, guys
-  </b>
+  <b>Hey, guys</b>
 </p>
 <p>
   I am here
@@ -325,9 +313,7 @@ and girls";
         var contentText = "This is `string[] Tags` inline code";
         
         const string excepted = @"<p>
-  This is <code>
-    string[] Tags
-  </code> inline code
+  This is <code>string[] Tags</code> inline code
 </p>";
 
         Assert.Equal(excepted, ToHtml(contentText));
