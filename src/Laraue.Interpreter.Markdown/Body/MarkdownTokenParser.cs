@@ -410,17 +410,7 @@ public class MarkdownTokenParser
             return ReadBoldElement(tokenType);
         
         // Otherwise - it is "italic" case
-        var elements = new List<MarkdownContentBlockElement>();
-        while (!IsRowEndReached() && !Match(tokenType))
-        {
-            var next = ReadElement();
-            elements.Add(next);
-        }
-
-        return new ItalicMarkdownContentBlockElement
-        {
-            InnerElements = elements.ToArray()
-        };
+        return ReadItalicElement(tokenType);
     }
 
     private BoldMarkdownContentBlockElement ReadBoldElement(
@@ -435,11 +425,27 @@ public class MarkdownTokenParser
                 break;
             }
             
-            var next = ReadElement();
+            var next = ReadPlainElement();
             elements.Add(next);
         }
 
         return new BoldMarkdownContentBlockElement
+        {
+            InnerElements = elements.ToArray()
+        };
+    }
+
+    private ItalicMarkdownContentBlockElement ReadItalicElement(
+        MarkdownTokenType tokenType)
+    {
+        var elements = new List<MarkdownContentBlockElement>();
+        while (!IsRowEndReached() && !Match(tokenType))
+        {
+            var next = ReadPlainElement();
+            elements.Add(next);
+        }
+
+        return new ItalicMarkdownContentBlockElement
         {
             InnerElements = elements.ToArray()
         };

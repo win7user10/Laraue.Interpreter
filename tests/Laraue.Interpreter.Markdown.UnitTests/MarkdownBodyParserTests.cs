@@ -447,6 +447,43 @@ Next line";
         
         Assert.Equal(excepted, ToHtml(contentText));
     }
+    
+    [Fact]
+    public void Underscore_ShouldBeRenderedAsText_InsideAsterisk()
+    {
+      var contentText = "*@bot_name_bot*";
+        
+      const string excepted = @"<p>
+  <em>@bot_name_bot</em>
+</p>";
+        
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+    
+    
+    [Fact]
+    public void Underscore_ShouldBeRenderedAsText_InsideAsterisks()
+    {
+      var contentText = "**@bot_name_bot**";
+        
+      const string excepted = @"<p>
+  <b>@bot_name_bot</b>
+</p>";
+        
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+    
+    [Fact]
+    public void UnderscoreLinks_ShouldRendersAsPlainText_Always()
+    {
+      var contentText = "[My link](https://link_with_underscore)";
+        
+      const string excepted = @"<p>
+  <a href=""https://link_with_underscore"">My link</a>
+</p>";
+        
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
 
     private static string ToHtml(string markdown, bool generateHeaderLinks = false)
     {
