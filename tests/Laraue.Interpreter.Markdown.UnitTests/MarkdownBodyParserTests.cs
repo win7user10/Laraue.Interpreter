@@ -476,10 +476,10 @@ Next line";
     [Fact]
     public void UnderscoreLinks_ShouldRendersAsPlainText_Always()
     {
-      var contentText = "[My link](https://link_with_underscore)";
+      var contentText = "**[My link](https://link_with_underscore)**";
         
       const string excepted = @"<p>
-  <a href=""https://link_with_underscore"">My link</a>
+  <b><a href=""https://link_with_underscore"">My link</a></b>
 </p>";
         
       Assert.Equal(excepted, ToHtml(contentText));

@@ -366,13 +366,13 @@ public class MarkdownTokenParser
         
         return result.Trim(" ").ToArray();
     }
-    
+
     private MarkdownContentBlockElement ReadElement()
     {
-        if (Match(MarkdownTokenType.Asterisk))
+        if (Check(MarkdownTokenType.Asterisk))
             return ReadItalicOrBoldElement(MarkdownTokenType.Asterisk);
         
-        if (Match(MarkdownTokenType.Underscore))
+        if (Check(MarkdownTokenType.Underscore))
             return ReadItalicOrBoldElement(MarkdownTokenType.Underscore);
         
         if (Match(MarkdownTokenType.Backtick))
@@ -403,14 +403,30 @@ public class MarkdownTokenParser
         };
     }
     
+    private bool _boldReadStarted;
+    private bool _italicReadStarted;
+    
     private MarkdownContentBlockElement ReadItalicOrBoldElement(MarkdownTokenType tokenType)
     {
+        if (_boldReadStarted || _italicReadStarted)
+            return ReadPlainElement();
+        
         // If the element is written twice - it is the "bold" case
-        if (Match(tokenType))
-            return ReadBoldElement(tokenType);
+        if (CheckSequential(tokenType, 2))
+        {
+            Advance(2);
+            _boldReadStarted = true;
+            var bold = ReadBoldElement(tokenType);
+            _boldReadStarted = false;
+            return bold;
+        }
         
         // Otherwise - it is "italic" case
-        return ReadItalicElement(tokenType);
+        Advance();
+        _italicReadStarted = true;
+        var italic = ReadItalicElement(tokenType);
+        _italicReadStarted = false;
+        return italic;
     }
 
     private BoldMarkdownContentBlockElement ReadBoldElement(
@@ -425,7 +441,7 @@ public class MarkdownTokenParser
                 break;
             }
             
-            var next = ReadPlainElement();
+            var next = ReadElement();
             elements.Add(next);
         }
 
@@ -441,7 +457,7 @@ public class MarkdownTokenParser
         var elements = new List<MarkdownContentBlockElement>();
         while (!IsRowEndReached() && !Match(tokenType))
         {
-            var next = ReadPlainElement();
+            var next = ReadElement();
             elements.Add(next);
         }
 
