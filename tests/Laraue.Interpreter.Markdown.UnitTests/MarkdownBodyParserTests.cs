@@ -474,12 +474,24 @@ Next line";
     }
     
     [Fact]
-    public void UnderscoreLinks_ShouldRendersAsPlainText_Always()
+    public void UnderscoreLinks_ShouldRendersAsPlainText_WhenUnderscoreInLink()
     {
       var contentText = "**[My link](https://link_with_underscore)**";
         
       const string excepted = @"<p>
   <b><a href=""https://link_with_underscore"">My link</a></b>
+</p>";
+        
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+    
+    [Fact]
+    public void UnderscoreLinks_ShouldRendersAsPlainText_WhenUnderscoreInTitle()
+    {
+      var contentText = "[@my_bot](https://t.me/my_bot)";
+        
+      const string excepted = @"<p>
+  <a href=""https://t.me/my_bot"">@my_bot</a>
 </p>";
         
       Assert.Equal(excepted, ToHtml(contentText));

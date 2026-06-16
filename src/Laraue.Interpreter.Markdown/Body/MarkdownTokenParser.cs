@@ -408,7 +408,7 @@ public class MarkdownTokenParser
     
     private MarkdownContentBlockElement ReadItalicOrBoldElement(MarkdownTokenType tokenType)
     {
-        if (_boldReadStarted || _italicReadStarted)
+        if (_boldReadStarted || _italicReadStarted || _linkReadStarted)
             return ReadPlainElement();
         
         // If the element is written twice - it is the "bold" case
@@ -482,8 +482,10 @@ public class MarkdownTokenParser
         };
     }
     
+    private bool _linkReadStarted;
     private LinkCodeMarkdownContentBlockElement ReadLink()
     {
+        _linkReadStarted = true;
         var linkContent = new List<MarkdownContentBlockElement>();
         while (!IsRowEndReached() && !Match(MarkdownTokenType.RightSquareBracket))
             linkContent.Add(ReadElement());
@@ -501,6 +503,7 @@ public class MarkdownTokenParser
             href = hrefBuilder.ToString();
         }
 
+        _linkReadStarted = false;
         return new LinkCodeMarkdownContentBlockElement
         {
             Link = linkContent.ToArray(),
