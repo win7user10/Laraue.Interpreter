@@ -496,6 +496,194 @@ Next line";
         
       Assert.Equal(excepted, ToHtml(contentText));
     }
+    
+    [Fact]
+    public void QuotedText_ShouldRendersAsPlainText_Always()
+    {
+      var contentText = "no \"updated!\" message";
+        
+      const string excepted = @"<p>
+  no ""updated!"" message
+</p>";
+        
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+    
+
+    [Theory]
+    [InlineData(@"\*not italic\*", "*not italic*")]
+    [InlineData(@"\_not italic\_", "_not italic_")]
+    [InlineData(@"\[not a link\]", "[not a link]")]
+    [InlineData(@"\`not code\`", "`not code`")]
+    [InlineData(@"\~\~not struck\~\~", "~~not struck~~")]
+    [InlineData(@"\\literal backslash", "\\literal backslash")]
+    public void EscapedChars_ShouldRenderAsLiteralText_Always(string contentText, string expectedText)
+    {
+      var excepted = $@"<p>
+  {expectedText}
+</p>";
+
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+
+    [Fact]
+    public void BackslashBeforeNonEscapableChar_ShouldRenderBackslashLiterally()
+    {
+      var contentText = @"C:\repos\path";
+
+      const string excepted = @"<p>
+  C:\repos\path
+</p>";
+
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+
+    [Fact]
+    public void Strikethrough_ShouldBeRendered_Always()
+    {
+      var contentText = "~~struck out~~";
+
+      const string excepted = @"<p>
+  <del>struck out</del>
+</p>";
+
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+
+    [Fact]
+    public void SingleTilde_ShouldRenderAsPlainText_Always()
+    {
+      var contentText = "a ~ b";
+
+      const string excepted = @"<p>
+  a ~ b
+</p>";
+
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+
+    [Fact]
+    public void TableWithAlignment_ShouldRenderStyleAttributes_Always()
+    {
+      var contentText = @"| Left | Center | Right |
+| :--- | :---: | ---: |
+| a | b | c |";
+
+      const string excepted = @"<table>
+  <thead>
+    <tr>
+      <th style=""text-align: left"">
+        Left
+      </th>
+      <th style=""text-align: center"">
+        Center
+      </th>
+      <th style=""text-align: right"">
+        Right
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style=""text-align: left"">
+        a
+      </td>
+      <td style=""text-align: center"">
+        b
+      </td>
+      <td style=""text-align: right"">
+        c
+      </td>
+    </tr>
+  </tbody>
+</table>";
+
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+
+    [Fact]
+    public void NestedEmphasis_BoldContainingItalic_ShouldBeRendered_Always()
+    {
+      var contentText = "**bold *and italic* still bold**";
+
+      const string excepted = @"<p>
+  <b>bold <em>and italic</em> still bold</b>
+</p>";
+
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+
+    [Fact]
+    public void NestedEmphasis_ItalicContainingBold_ShouldBeRendered_Always()
+    {
+      var contentText = "_italic **and bold** still italic_";
+
+      const string excepted = @"<p>
+  <em>italic <b>and bold</b> still italic</em>
+</p>";
+
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+
+    [Fact]
+    public void UnmatchedAsterisk_ShouldRenderAsPlainText_Always()
+    {
+      var contentText = "5 * 3 = 15";
+
+      const string excepted = @"<p>
+  5 * 3 = 15
+</p>";
+
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+
+    [Fact]
+    public void UnmatchedSquareBracket_ShouldRenderAsPlainText_Always()
+    {
+      var contentText = "array[index no link";
+
+      const string excepted = @"<p>
+  array[index no link
+</p>";
+
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+
+    [Fact]
+    public void StandaloneExclamationMark_ShouldRenderAsPlainText_Always()
+    {
+      var contentText = "Wow! Great";
+
+      const string excepted = @"<p>
+  Wow! Great
+</p>";
+
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+
+    [Fact]
+    public void LessThanSign_ShouldRenderEscaped_Always()
+    {
+      var contentText = "List<T> here";
+
+      const string excepted = @"<p>
+  List&lt;T&gt; here
+</p>";
+
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+
+    [Fact]
+    public void MixedNestedList_UnorderedInsideOrdered_ShouldPreserveOwnTags()
+    {
+      var contentText = @"1. First
+   - Nested unordered
+2. Second";
+
+      var excepted = "<ol>\r\n  <li>\r\n    First\r\n  </li>\r\n  \r\n  <ul>\r\n    <li>\r\n      Nested unordered\r\n    </li>\r\n  </ul>\r\n  <li>\r\n    Second\r\n  </li>\r\n</ol>".Replace("\r\n", Environment.NewLine);
+
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
 
     private static string ToHtml(string markdown, bool generateHeaderLinks = false)
     {

@@ -3,14 +3,15 @@
 /// <summary>
 /// Base class to implement a <see href="https://craftinginterpreters.com/scanning.html">Scanner</see>.
 /// </summary>
-/// <param name="input">The string to scan.</param>
+/// <param name="input">The text to scan.</param>
 /// <typeparam name="TTokenType">Type of tokens should be returned.</typeparam>
-public abstract class TokenScanner<TTokenType>(string input) where TTokenType : struct, Enum
+public abstract class TokenScanner<TTokenType>(ReadOnlyMemory<char> input) where TTokenType : struct, Enum
 {
     /// <summary>
-    /// Input string.
+    /// Input text. Stored as <see cref="ReadOnlyMemory{T}"/> so that scanning and lexeme
+    /// extraction don't allocate a new string per token.
     /// </summary>
-    protected readonly string Input = input;
+    protected readonly ReadOnlyMemory<char> Input = input;
 
     private int _startAbsolutePosition;
     private int _currentAbsolutePosition;
@@ -62,7 +63,7 @@ public abstract class TokenScanner<TTokenType>(string input) where TTokenType : 
         _tokens.Add(new Token<TTokenType>
         {
             TokenType = null,
-            Lexeme = null,
+            LexemeMemory = ReadOnlyMemory<char>.Empty,
             StartPosition = _startRelativePosition,
             EndPosition = _currentRelativePosition,
             LineNumber = _lineNumber,
@@ -92,9 +93,9 @@ public abstract class TokenScanner<TTokenType>(string input) where TTokenType : 
     {
         if (Input.Length > _currentAbsolutePosition + offset)
         {
-            return check(Input[_currentAbsolutePosition + offset]);
+            return check(Input.Span[_currentAbsolutePosition + offset]);
         }
-        
+
         return false;
     }
 
@@ -117,7 +118,7 @@ public abstract class TokenScanner<TTokenType>(string input) where TTokenType : 
     protected char Advance()
     {
         _currentRelativePosition++;
-        return Input[_currentAbsolutePosition++];
+        return Input.Span[_currentAbsolutePosition++];
     }
 
     protected char Advance(int times)
@@ -142,7 +143,7 @@ public abstract class TokenScanner<TTokenType>(string input) where TTokenType : 
             return false;
         }
 
-        if (!predicate(Input[_currentAbsolutePosition]))
+        if (!predicate(Input.Span[_currentAbsolutePosition]))
         {
             return false;
         }
@@ -171,12 +172,12 @@ public abstract class TokenScanner<TTokenType>(string input) where TTokenType : 
     /// <param name="literal">The value of scanned tokens (for strings, numbers, etc.)</param>
     protected void AddToken(TTokenType tokenType, object? literal = null)
     {
-        var lexeme = Input[_startAbsolutePosition.._currentAbsolutePosition];
-            
+        var lexemeMemory = Input[_startAbsolutePosition.._currentAbsolutePosition];
+
         _tokens.Add(new Token<TTokenType>
         {
             TokenType = tokenType,
-            Lexeme = lexeme,
+            LexemeMemory = lexemeMemory,
             Literal = literal,
             StartPosition = _startRelativePosition,
             EndPosition = _currentRelativePosition,
@@ -208,7 +209,7 @@ public abstract class TokenScanner<TTokenType>(string input) where TTokenType : 
     /// <returns></returns>
     protected ReadOnlySpan<char> GetCurrentScanValue()
     {
-        return Input.AsSpan(_startAbsolutePosition.._currentAbsolutePosition);
+        return Input.Span[_startAbsolutePosition.._currentAbsolutePosition];
     }
     
     private void ScanToken()

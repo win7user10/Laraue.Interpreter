@@ -50,23 +50,33 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
     /// <summary>
     /// Skip the tokens until the token differs from the passed token types will receive.
     /// </summary>
-    protected void Skip(params TTokenType?[] tokenTypes)
+    protected void Skip(params ReadOnlySpan<TTokenType?> tokenTypes)
     {
         do
         {
         } while (Match(tokenTypes));
     }
-    
+
     /// <summary>
     /// If the next token is match to the passed, go to the next token.
     /// </summary>
     /// <param name="tokenTypes"></param>
     /// <returns></returns>
-    protected bool Match(params TTokenType?[] tokenTypes)
+    protected bool Match(params ReadOnlySpan<TTokenType?> tokenTypes)
     {
-        if (!tokenTypes.Any(Check)) 
+        var matched = false;
+        foreach (var tokenType in tokenTypes)
+        {
+            if (Check(tokenType))
+            {
+                matched = true;
+                break;
+            }
+        }
+
+        if (!matched)
             return false;
-        
+
         Advance();
         return true;
     }
@@ -103,9 +113,15 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
     /// </summary>
     /// <param name="exceptedTokenTypes"></param>
     /// <returns></returns>
-    protected bool Check(params TTokenType?[] exceptedTokenTypes)
+    protected bool Check(params ReadOnlySpan<TTokenType?> exceptedTokenTypes)
     {
-        return exceptedTokenTypes.Any(Check);
+        foreach (var exceptedTokenType in exceptedTokenTypes)
+        {
+            if (Check(exceptedTokenType))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -199,21 +215,21 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
     /// <summary>
     /// Check if the next tokens sequence is equal to the passed then consumes these tokens.
     /// </summary>
-    protected bool MatchSequential(params TTokenType[] tokenTypes)
+    protected bool MatchSequential(params ReadOnlySpan<TTokenType> tokenTypes)
     {
         if (CheckSequential(tokenTypes))
         {
             Advance(tokenTypes.Length);
             return true;
         }
-        
+
         return false;
     }
-    
+
     /// <summary>
     /// Check if the next tokens sequence is equal to the passed.
     /// </summary>
-    protected bool CheckSequential(params TTokenType[] tokenTypes)
+    protected bool CheckSequential(params ReadOnlySpan<TTokenType> tokenTypes)
     {
         for (var i = 0; i < tokenTypes.Length; i++)
         {
@@ -222,7 +238,7 @@ public abstract class TokenParser<TTokenType, TParsedExpression>(Token<TTokenTyp
                 return false;
             }
         }
-        
+
         return true;
     }
     

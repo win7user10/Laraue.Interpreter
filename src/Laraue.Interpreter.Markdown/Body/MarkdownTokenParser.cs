@@ -73,14 +73,14 @@ public class MarkdownTokenParser
                     MarkdownTokenType.Number,
                     MarkdownTokenType.Dot,
                     MarkdownTokenType.Whitespace),
-                Read = ReadOrderedList
+                Read = ReadList
             },
             new ReadBlockDelegate
             {
                 IsApplicable = () => CheckSequential(
                     MarkdownTokenType.MinusSign,
                     MarkdownTokenType.Whitespace),
-                Read = ReadUnorderedList
+                Read = ReadList
             }
         );
     }
@@ -113,20 +113,53 @@ public class MarkdownTokenParser
         while (TryReadTableRow(out var row))
             rows.Add(row);
 
-        if (IsTableContentDivider(rows.First()))
+        var firstRowIsDivider = IsTableContentDivider(rows.First());
+        var dividerRow = firstRowIsDivider
+            ? rows.First()
+            : rows.Count > 1 ? rows[1] : null;
+
+        var alignments = dividerRow is null
+            ? []
+            : dividerRow.Cells.Select(GetColumnAlignment).ToArray();
+
+        if (firstRowIsDivider)
         {
             return new TableContentBlock
             {
                 Header = null,
-                Rows = rows.Skip(1).ToArray()
+                Rows = rows.Skip(1).ToArray(),
+                ColumnAlignments = alignments,
             };
         }
-        
+
         return new TableContentBlock
         {
             Header = rows.First(),
-            Rows = rows.Skip(2).ToArray()
+            Rows = rows.Skip(2).ToArray(),
+            ColumnAlignments = alignments,
         };
+    }
+
+    private static TableColumnAlignment GetColumnAlignment(TableContentBlockCell cell)
+    {
+        var content = GetPlainContent(cell);
+        var leftAlign = content.StartsWith(':');
+        var rightAlign = content.EndsWith(':');
+
+        return (leftAlign, rightAlign) switch
+        {
+            (true, true) => TableColumnAlignment.Center,
+            (true, false) => TableColumnAlignment.Left,
+            (false, true) => TableColumnAlignment.Right,
+            _ => TableColumnAlignment.None,
+        };
+    }
+
+    private static string GetPlainContent(TableContentBlockCell cell)
+    {
+        return string.Concat(cell.Elements
+            .OfType<PlainMarkdownContentBlockElement>()
+            .Select(e => e.Content));
     }
     
     private BlockquoteContentBlock ReadQuote()
@@ -155,9 +188,16 @@ public class MarkdownTokenParser
 
     private bool IsTableContentDivider(TableContentBlockRow row)
     {
-        return row.Cells.Length > 0 && row.Cells
-            .All(c => c.Elements.Length > 0 && c.Elements
-                .All(e => e is PlainMarkdownContentBlockElement { Content: "-" }));
+        return row.Cells.Length > 0 && row.Cells.All(IsDividerCell);
+    }
+
+    private static bool IsDividerCell(TableContentBlockCell cell)
+    {
+        if (cell.Elements.Length == 0 || cell.Elements.Any(e => e is not PlainMarkdownContentBlockElement))
+            return false;
+
+        var dashes = GetPlainContent(cell).Trim(':');
+        return dashes.Length > 0 && dashes.All(c => c == '-');
     }
 
     private bool TryReadTableRow(
@@ -242,57 +282,72 @@ public class MarkdownTokenParser
             && Check(-2, MarkdownTokenType.NewLine);
     }
 
-    private ListBlock ReadOrderedList()
+    private static readonly MarkdownTokenType[] OrderedListMarker =
+    [
+        MarkdownTokenType.Number,
+        MarkdownTokenType.Dot,
+        MarkdownTokenType.Whitespace
+    ];
+
+    private static readonly MarkdownTokenType[] UnorderedListMarker =
+    [
+        MarkdownTokenType.MinusSign,
+        MarkdownTokenType.Whitespace
+    ];
+
+    private ListBlock ReadList()
     {
-        var rows = ReadListRows([
-            MarkdownTokenType.Number,
-            MarkdownTokenType.Dot,
-            MarkdownTokenType.Whitespace]);
+        var rows = ReadListRows();
 
         return new ListBlock
         {
             Rows = rows,
-            IsOrdered = true,
+            IsOrdered = rows.Length == 0 || rows[0].IsOrdered,
         };
     }
 
-    private ListBlock ReadUnorderedList()
+    private bool TryMatchListMarker(out bool isOrdered)
     {
-        var rows = ReadListRows([
-            MarkdownTokenType.MinusSign,
-            MarkdownTokenType.Whitespace]);
-
-        return new ListBlock
+        if (MatchSequential(OrderedListMarker))
         {
-            Rows = rows,
-            IsOrdered = false,
-        };
+            isOrdered = true;
+            return true;
+        }
+
+        if (MatchSequential(UnorderedListMarker))
+        {
+            isOrdered = false;
+            return true;
+        }
+
+        isOrdered = false;
+        return false;
     }
-    
-    private ListRow[] ReadListRows(MarkdownTokenType[] startTokens)
+
+    private ListRow[] ReadListRows()
     {
         var listNode = new ListNode();
-        
+
         var previousElementSpacesCount = 0;
-        while (!IsParseCompleted && MatchSequential(startTokens))
+        while (!IsParseCompleted && TryMatchListMarker(out var isOrdered))
         {
             var elements = new List<MarkdownContentBlockElement>();
-            
+
             // New line should continue list item, so that's code is here
             while (!IsParseCompleted)
             {
                 var next = ReadPlain();
                 var elementsToWrite = next.Elements;
                 elements.AddRange(elementsToWrite);
-                
+
                 if (PreviousLineWithTwoWhitespaces())
                     elements.Add(new NewLineElement());
                 else
                     break;
             }
-                    
-            listNode.Write(previousElementSpacesCount, elements.ToArray());
-            
+
+            listNode.Write(previousElementSpacesCount, isOrdered, elements.ToArray());
+
             previousElementSpacesCount = 0;
             while (Check(-previousElementSpacesCount - 1, MarkdownTokenType.Whitespace))
                 previousElementSpacesCount++;
@@ -305,22 +360,22 @@ public class MarkdownTokenParser
     {
         private int? _initialIdent;
         private readonly List<ListRow> _elements = new();
-        
-        public void Write(int spacesCount, MarkdownContentBlockElement[] elements)
+
+        public void Write(int spacesCount, bool isOrdered, MarkdownContentBlockElement[] elements)
         {
             var ident = spacesCount / 3;
             _initialIdent ??= ident;
-            
+
             var realIdent = Math.Abs(ident - _initialIdent.Value);
             var currentNode = _elements;
             for (var i = 0; i < realIdent; i++)
             {
                 if (currentNode.Count == 0)
-                    currentNode.Add(new ListRow { Elements = [] });
+                    currentNode.Add(new ListRow { Elements = [], IsOrdered = isOrdered });
                 currentNode = currentNode.Last().Children;
             }
-            
-            currentNode.Add(new ListRow { Elements = elements });
+
+            currentNode.Add(new ListRow { Elements = elements, IsOrdered = isOrdered });
         }
 
         public ListRow[] GetListRows()
@@ -337,7 +392,7 @@ public class MarkdownTokenParser
         
         string? language = null;
         if (Match(MarkdownTokenType.Word))
-            language = Previous().Literal?.ToString();
+            language = Previous().Literal?.ToString() ?? Previous().Lexeme;
 
         while (
             !IsParseCompleted
@@ -371,20 +426,62 @@ public class MarkdownTokenParser
     {
         if (Check(MarkdownTokenType.Asterisk))
             return ReadItalicOrBoldElement(MarkdownTokenType.Asterisk);
-        
+
         if (Check(MarkdownTokenType.Underscore))
             return ReadItalicOrBoldElement(MarkdownTokenType.Underscore);
-        
+
+        if (Check(MarkdownTokenType.Tilde))
+            return ReadStrikethroughElement();
+
         if (Match(MarkdownTokenType.Backtick))
             return ReadBacktickElement();
-        
-        if (Match(MarkdownTokenType.LeftSquareBracket))
+
+        if (Check(MarkdownTokenType.LeftSquareBracket))
+        {
+            if (!HasClosingDelimiterOnLine(MarkdownTokenType.RightSquareBracket, 1))
+                return ReadPlainElement();
+
+            Advance();
             return ReadLink();
-        
-        if (Match(MarkdownTokenType.Not))
+        }
+
+        if (Check(MarkdownTokenType.Not) && Check(1, MarkdownTokenType.LeftSquareBracket))
+        {
+            Advance();
             return ReadImage();
+        }
 
         return ReadPlainElement();
+    }
+
+    /// <summary>
+    /// Returns true if the token type repeated <paramref name="width"/> times can be found
+    /// somewhere later on the current row. Used to avoid opening an emphasis/link span
+    /// that will never be closed, in which case the opening delimiter should be read as plain text.
+    /// </summary>
+    private bool HasClosingDelimiterOnLine(MarkdownTokenType tokenType, int width)
+    {
+        var offset = width;
+        while (!Check(offset, MarkdownTokenType.NewLine) && !Check(offset, (MarkdownTokenType?)null))
+        {
+            if (CheckSequential(tokenType, width, offset))
+                return true;
+
+            offset++;
+        }
+
+        return false;
+    }
+
+    private bool CheckSequential(MarkdownTokenType tokenType, int count, int startOffset)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            if (!Check(startOffset + i, tokenType))
+                return false;
+        }
+
+        return true;
     }
 
     private PlainMarkdownContentBlockElement ReadPlainElement()
@@ -403,30 +500,78 @@ public class MarkdownTokenParser
         };
     }
     
-    private bool _boldReadStarted;
-    private bool _italicReadStarted;
-    
+    /// <summary>
+    /// Tracks currently open emphasis/strikethrough spans (token type + delimiter width) so that
+    /// the same exact delimiter can't be re-opened while already open (which would be ambiguous),
+    /// while still allowing different kinds of spans to nest, e.g. <c>**bold *and italic* text**</c>.
+    /// </summary>
+    private readonly Stack<(MarkdownTokenType TokenType, int Width)> _openEmphasis = new();
+
     private MarkdownContentBlockElement ReadItalicOrBoldElement(MarkdownTokenType tokenType)
     {
-        if (_boldReadStarted || _italicReadStarted || _linkReadStarted)
+        if (_linkReadStarted)
             return ReadPlainElement();
-        
-        // If the element is written twice - it is the "bold" case
-        if (CheckSequential(tokenType, 2))
+
+        var isBold = CheckSequential(tokenType, 2);
+        var width = isBold ? 2 : 1;
+
+        if (tokenType == MarkdownTokenType.Underscore && IsIntrawordUnderscore(width))
+            return ReadPlainElement();
+
+        var marker = (tokenType, width);
+        if (_openEmphasis.Contains(marker) || !HasClosingDelimiterOnLine(tokenType, width))
+            return ReadPlainElement();
+
+        Advance(width);
+        _openEmphasis.Push(marker);
+        var element = isBold
+            ? (MarkdownContentBlockElement)ReadBoldElement(tokenType)
+            : ReadItalicElement(tokenType);
+        _openEmphasis.Pop();
+        return element;
+    }
+
+    /// <summary>
+    /// CommonMark's intraword underscore rule: an underscore surrounded by word characters on both
+    /// sides (e.g. <c>bot_name_bot</c>) is not treated as an emphasis delimiter.
+    /// </summary>
+    private bool IsIntrawordUnderscore(int width)
+    {
+        return HasPrevious()
+            && (Check(-1, MarkdownTokenType.Word) || Check(-1, MarkdownTokenType.Number))
+            && (Check(width, MarkdownTokenType.Word) || Check(width, MarkdownTokenType.Number));
+    }
+
+    private MarkdownContentBlockElement ReadStrikethroughElement()
+    {
+        if (_linkReadStarted || !CheckSequential(MarkdownTokenType.Tilde, 2))
+            return ReadPlainElement();
+
+        var marker = (MarkdownTokenType.Tilde, 2);
+        if (_openEmphasis.Contains(marker) || !HasClosingDelimiterOnLine(MarkdownTokenType.Tilde, 2))
+            return ReadPlainElement();
+
+        Advance(2);
+        _openEmphasis.Push(marker);
+
+        var elements = new List<MarkdownContentBlockElement>();
+        while (!IsRowEndReached())
         {
-            Advance(2);
-            _boldReadStarted = true;
-            var bold = ReadBoldElement(tokenType);
-            _boldReadStarted = false;
-            return bold;
+            if (CheckSequential(MarkdownTokenType.Tilde, MarkdownTokenType.Tilde))
+            {
+                Advance(2);
+                break;
+            }
+
+            elements.Add(ReadElement());
         }
-        
-        // Otherwise - it is "italic" case
-        Advance();
-        _italicReadStarted = true;
-        var italic = ReadItalicElement(tokenType);
-        _italicReadStarted = false;
-        return italic;
+
+        _openEmphasis.Pop();
+
+        return new StrikethroughMarkdownContentBlockElement
+        {
+            InnerElements = elements.ToArray()
+        };
     }
 
     private BoldMarkdownContentBlockElement ReadBoldElement(

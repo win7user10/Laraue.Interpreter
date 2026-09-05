@@ -128,7 +128,7 @@ public class MarkdownTreeWriter
                         for (var index = 0; index < tableBlock.Header.Cells.Length; index++)
                         {
                             var row = tableBlock.Header.Cells[index];
-                            WriteElements(rowBuilder, "th", addIdent: true, row.Elements);
+                            WriteElements(rowBuilder, "th", addIdent: true, row.Elements, GetAlignmentAttribute(tableBlock.ColumnAlignments, index));
                             if (index < tableBlock.Header.Cells.Length - 1)
                                 rowBuilder.AppendNewLine();
                         }
@@ -154,7 +154,7 @@ public class MarkdownTreeWriter
                         for (var index = 0; index < row.Cells.Length; index++)
                         {
                             var cell = row.Cells[index];
-                            WriteElements(rowBuilder, "td", addIdent: true, cell.Elements);
+                            WriteElements(rowBuilder, "td", addIdent: true, cell.Elements, GetAlignmentAttribute(tableBlock.ColumnAlignments, index));
                             if (index < row.Cells.Length - 1)
                                 rowBuilder.AppendNewLine();
                         }
@@ -197,8 +197,9 @@ public class MarkdownTreeWriter
 
                 if (row.Children.Count > 0)
                 {
+                    var childTag = row.Children[0].IsOrdered ? "ol" : "ul";
                     inner.AppendNewLine();
-                    WriteListRow(inner, row.Children, tag);
+                    WriteListRow(inner, row.Children, childTag);
                     if (index < rows.Count - 1)
                         inner.AppendNewLine();
                 }
@@ -260,9 +261,17 @@ public class MarkdownTreeWriter
             case NewLineElement newLineElement:
                 Write(sb, newLineElement);
                 break;
+            case StrikethroughMarkdownContentBlockElement strikethroughElement:
+                Write(sb, strikethroughElement);
+                break;
             default:
                 throw new NotImplementedException();
         }
+    }
+
+    private void Write(IndentedStringBuilder sb, StrikethroughMarkdownContentBlockElement strikethroughElement)
+    {
+        WriteElements(sb, "del", addIdent: false, strikethroughElement.InnerElements);
     }
     
     private void Write(IndentedStringBuilder sb, PlainMarkdownContentBlockElement plainElement)
@@ -337,15 +346,30 @@ public class MarkdownTreeWriter
                 .Append('"');
     }
 
+    private static string GetAlignmentAttribute(TableColumnAlignment[] columnAlignments, int columnIndex)
+    {
+        if (columnIndex >= columnAlignments.Length)
+            return "";
+
+        return columnAlignments[columnIndex] switch
+        {
+            TableColumnAlignment.Left => " style=\"text-align: left\"",
+            TableColumnAlignment.Center => " style=\"text-align: center\"",
+            TableColumnAlignment.Right => " style=\"text-align: right\"",
+            _ => "",
+        };
+    }
+
     private void WriteElements(
         IndentedStringBuilder sb,
         string wrappingTag,
         bool addIdent,
-        IEnumerable<MarkdownContentBlockElement> elements)
+        IEnumerable<MarkdownContentBlockElement> elements,
+        string attributes = "")
     {
         var elementsArray = elements.ToArray();
-        
-        sb.Append($"<{wrappingTag}>");
+
+        sb.Append($"<{wrappingTag}{attributes}>");
         if (elementsArray.Length == 0)
         {
             sb.Append($"</{wrappingTag}>");
