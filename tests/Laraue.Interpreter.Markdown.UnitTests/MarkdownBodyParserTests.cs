@@ -1,4 +1,6 @@
 ﻿using Laraue.Interpreter.Markdown.Body;
+using Laraue.Interpreter.Markdown.Body.Extensibility;
+using Laraue.Interpreter.Markdown.Body.Extensibility.Examples;
 using Laraue.Interpreter.Parsing.Extensions;
 using Laraue.Interpreter.Scanning.Extensions;
 
@@ -685,13 +687,64 @@ Next line";
       Assert.Equal(excepted, ToHtml(contentText));
     }
 
-    private static string ToHtml(string markdown, bool generateHeaderLinks = false)
+    [Fact]
+    public void VideoExtension_ShouldNotBeRecognized_WhenNotRegistered()
+    {
+      var contentText = "!video[My clip](movie.mp4)";
+
+      const string excepted = @"<p>
+  !video<a href=""movie.mp4"">My clip</a>
+</p>";
+
+      Assert.Equal(excepted, ToHtml(contentText));
+    }
+
+    [Fact]
+    public void VideoExtension_ShouldRenderVideoTag_WhenRegistered()
+    {
+      var contentText = "!video[My clip](movie.mp4)";
+
+      const string excepted = @"<p>
+  <video controls src=""movie.mp4"">My clip</video>
+</p>";
+
+      Assert.Equal(excepted, ToHtml(contentText, extensions: [new VideoMarkdownExtension()]));
+    }
+
+    [Fact]
+    public void VideoExtension_ShouldRenderWithoutAlt_WhenAltEmpty()
+    {
+      var contentText = "!video[](movie.mp4)";
+
+      const string excepted = @"<p>
+  <video controls src=""movie.mp4""></video>
+</p>";
+
+      Assert.Equal(excepted, ToHtml(contentText, extensions: [new VideoMarkdownExtension()]));
+    }
+
+    [Fact]
+    public void ImageSyntax_ShouldStillWork_WhenVideoExtensionRegistered()
+    {
+      var contentText = "![My image](photo.png)";
+
+      const string excepted = @"<p>
+  <img src=""photo.png"" alt=""My image"" />
+</p>";
+
+      Assert.Equal(excepted, ToHtml(contentText, extensions: [new VideoMarkdownExtension()]));
+    }
+
+    private static string ToHtml(
+      string markdown,
+      bool generateHeaderLinks = false,
+      IReadOnlyList<IMarkdownExtension>? extensions = null)
     {
         var scanner = new MarkdownTokenScanner(markdown);
         var scanResult = scanner.ScanTokens();
         scanResult.ThrowOnAnyError();
 
-        var parser = new MarkdownTokenParser(scanResult.Tokens);
+        var parser = new MarkdownTokenParser(scanResult.Tokens, extensions);
         var parseResult = parser.Parse();
         parseResult.ThrowOnAnyError();
 
@@ -699,7 +752,8 @@ Next line";
           new WriteOptions
           {
             GenerateHeaderLinks = generateHeaderLinks
-          })
+          },
+          extensions)
           .Write(parseResult.Result!);
 
         return result.Replace("\r\n", Environment.NewLine);

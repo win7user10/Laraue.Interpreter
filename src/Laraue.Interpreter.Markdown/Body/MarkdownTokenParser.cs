@@ -2,13 +2,14 @@
 using System.Text;
 using Laraue.Interpreter.Markdown.Body.BlockElements;
 using Laraue.Interpreter.Markdown.Body.Blocks;
+using Laraue.Interpreter.Markdown.Body.Extensibility;
 using Laraue.Interpreter.Parsing;
 using Laraue.Interpreter.Scanning;
 
 namespace Laraue.Interpreter.Markdown.Body;
 
 public class MarkdownTokenParser
-    : TokenParser<MarkdownTokenType, MarkdownTree>
+    : TokenParser<MarkdownTokenType, MarkdownTree>, IMarkdownInlineParserContext
 {
     protected override MarkdownTree ParseInternal()
     {
@@ -38,9 +39,14 @@ public class MarkdownTokenParser
     }
 
     private readonly List<ReadBlockDelegate> _readBlockDelegates = new ();
+    private readonly IReadOnlyList<IMarkdownInlineExtension> _inlineExtensions;
 
-    public MarkdownTokenParser(Token<MarkdownTokenType>[] tokens) : base(tokens)
+    public MarkdownTokenParser(
+        Token<MarkdownTokenType>[] tokens,
+        IReadOnlyList<IMarkdownInlineExtension>? inlineExtensions = null) : base(tokens)
     {
+        _inlineExtensions = inlineExtensions ?? [];
+
         _readBlockDelegates.AddRange(
             new ReadBlockDelegate
             {
@@ -424,6 +430,12 @@ public class MarkdownTokenParser
 
     private MarkdownContentBlockElement ReadElement()
     {
+        foreach (var extension in _inlineExtensions)
+        {
+            if (extension.CanRead(this))
+                return extension.Read(this);
+        }
+
         if (Check(MarkdownTokenType.Asterisk))
             return ReadItalicOrBoldElement(MarkdownTokenType.Asterisk);
 
@@ -712,5 +724,37 @@ public class MarkdownTokenParser
     private bool IsRowEndReached()
     {
         return IsParseCompleted || Check(MarkdownTokenType.NewLine);
+    }
+
+    bool IMarkdownInlineParserContext.Check(MarkdownTokenType tokenType) => Check(tokenType);
+
+    bool IMarkdownInlineParserContext.Check(int offset, MarkdownTokenType tokenType) => Check(offset, tokenType);
+
+    bool IMarkdownInlineParserContext.CheckWord(int offset, string word)
+    {
+        if (!Check(offset, MarkdownTokenType.Word))
+            return false;
+
+        var token = Take(CurrentIndex + offset);
+        var text = token.Literal as string ?? token.Lexeme;
+        return text == word;
+    }
+
+    bool IMarkdownInlineParserContext.IsRowEndReached() => IsRowEndReached();
+
+    Token<MarkdownTokenType> IMarkdownInlineParserContext.Advance() => Advance();
+
+    MarkdownContentBlockElement IMarkdownInlineParserContext.ReadElement() => ReadElement();
+
+    string IMarkdownInlineParserContext.ReadRawTextUntil(MarkdownTokenType terminator)
+    {
+        var sb = new StringBuilder();
+        while (!IsRowEndReached() && !Check(terminator))
+        {
+            var element = ReadPlainElement();
+            sb.Append(element.Content);
+        }
+
+        return sb.ToString();
     }
 }

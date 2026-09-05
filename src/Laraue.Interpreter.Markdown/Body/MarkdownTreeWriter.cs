@@ -1,15 +1,30 @@
 ﻿using Laraue.Interpreter.Markdown.Body.BlockElements;
 using Laraue.Interpreter.Markdown.Body.Blocks;
+using Laraue.Interpreter.Markdown.Body.Extensibility;
 
 namespace Laraue.Interpreter.Markdown.Body;
 
 public class MarkdownTreeWriter
 {
     private readonly WriteOptions _options;
+    private readonly IReadOnlyList<IMarkdownElementWriterExtension> _elementWriterExtensions;
 
-    public MarkdownTreeWriter(WriteOptions options)
+    public MarkdownTreeWriter(
+        WriteOptions options,
+        IReadOnlyList<IMarkdownElementWriterExtension>? elementWriterExtensions = null)
     {
         _options = options;
+        _elementWriterExtensions = elementWriterExtensions ?? [];
+    }
+
+    private sealed class WriterContext(MarkdownTreeWriter writer, IndentedStringBuilder sb) : IMarkdownWriterContext
+    {
+        public void Append(string value) => sb.Append(value);
+        public void Append(char value) => sb.Append(value);
+        public void AppendNewLine(string? value = null) => sb.AppendNewLine(value);
+        public void WithIdent(Action<IMarkdownWriterContext> action) =>
+            sb.WithIdent(inner => action(new WriterContext(writer, inner)));
+        public void WriteChild(MarkdownContentBlockElement element) => writer.Write(sb, element);
     }
     
     private static readonly Dictionary<char, string> EscapedChars = new()
@@ -265,8 +280,23 @@ public class MarkdownTreeWriter
                 Write(sb, strikethroughElement);
                 break;
             default:
-                throw new NotImplementedException();
+                WriteExtensionElement(sb, contentBlockElement);
+                break;
         }
+    }
+
+    private void WriteExtensionElement(IndentedStringBuilder sb, MarkdownContentBlockElement contentBlockElement)
+    {
+        foreach (var extension in _elementWriterExtensions)
+        {
+            if (extension.CanWrite(contentBlockElement))
+            {
+                extension.Write(new WriterContext(this, sb), contentBlockElement);
+                return;
+            }
+        }
+
+        throw new NotImplementedException(contentBlockElement.GetType().Name);
     }
 
     private void Write(IndentedStringBuilder sb, StrikethroughMarkdownContentBlockElement strikethroughElement)
