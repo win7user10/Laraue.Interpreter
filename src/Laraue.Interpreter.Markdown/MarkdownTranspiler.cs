@@ -1,4 +1,5 @@
 ﻿using Laraue.Interpreter.Markdown.Body;
+using Laraue.Interpreter.Markdown.Body.Extensibility;
 using Laraue.Interpreter.Markdown.Meta;
 using Laraue.Interpreter.Parsing.Extensions;
 using Laraue.Interpreter.Scanning.Extensions;
@@ -26,11 +27,12 @@ public interface IMarkdownTranspiler
 }
 
 public class MarkdownTranspiler(
-    WriteOptions options, 
-    IMarkdownInnerLinksGenerator innerLinksGenerator)
+    WriteOptions options,
+    IMarkdownInnerLinksGenerator innerLinksGenerator,
+    IReadOnlyList<IMarkdownExtension>? extensions = null)
     : IMarkdownTranspiler
 {
-    private readonly MarkdownTreeWriter _markdownTreeWriter = new(options);
+    private readonly MarkdownTreeWriter _markdownTreeWriter = new(options, extensions);
 
     public MarkdownTranspiler() : this(
         new WriteOptions(),
@@ -70,7 +72,7 @@ public class MarkdownTranspiler(
         var bodyScanResult = bodyScanner.ScanTokens();
         bodyScanResult.ThrowOnAnyError();
 
-        var bodyParser = new MarkdownTokenParser(bodyScanResult.Tokens);
+        var bodyParser = new MarkdownTokenParser(bodyScanResult.Tokens, extensions);
         var bodyParseResult = bodyParser.Parse();
         bodyParseResult.ThrowOnAnyError();
 

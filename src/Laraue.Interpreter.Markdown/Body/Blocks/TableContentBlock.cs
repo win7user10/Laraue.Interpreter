@@ -6,6 +6,15 @@ public class TableContentBlock : MarkdownContentBlock
 {
     public required TableContentBlockRow? Header { get; init; }
     public required TableContentBlockRow[] Rows { get; init; }
+    public TableColumnAlignment[] ColumnAlignments { get; init; } = [];
+}
+
+public enum TableColumnAlignment
+{
+    None,
+    Left,
+    Center,
+    Right,
 }
 
 public class TableContentBlockRow

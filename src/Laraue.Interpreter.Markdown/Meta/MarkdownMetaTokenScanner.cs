@@ -3,7 +3,7 @@
 namespace Laraue.Interpreter.Markdown.Meta;
 
 public class MarkdownMetaTokenScanner(string input)
-    : TokenScanner<MarkdownMetaTokenType>(input)
+    : TokenScanner<MarkdownMetaTokenType>(input.AsMemory())
 {
     protected override MarkdownMetaTokenType NewLineTokenType => MarkdownMetaTokenType.NewLine;
     protected override bool AddNewLineTokens => true;
@@ -87,8 +87,11 @@ public class MarkdownMetaTokenScanner(string input)
     private void ReadContent()
     {
         while (PopNextCharIf(_ => true));
-        var text = GetCurrentScanValue();
-        AddToken(MarkdownMetaTokenType.Content, text.ToString());
+
+        // No explicit Literal here: MarkdownMetaTokenParser reads this token's Lexeme,
+        // so passing a separately-allocated copy of the same text would be wasted work
+        // for what can be the whole remainder of a large document.
+        AddToken(MarkdownMetaTokenType.Content);
     }
     
     private readonly char[] _nonWordsChar = [',', '\r', '\n', ':', '[', ']'];

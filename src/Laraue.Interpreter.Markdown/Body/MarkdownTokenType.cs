@@ -76,4 +76,19 @@ public enum MarkdownTokenType
     /// ">"
     /// </summary>
     GreaterThan,
+
+    /// <summary>
+    /// '~'
+    /// </summary>
+    Tilde,
+
+    /// <summary>
+    /// ':'
+    /// </summary>
+    Colon,
+
+    /// <summary>
+    /// A backslash-escaped markdown character, e.g. '\*'. Literal holds the escaped character.
+    /// </summary>
+    EscapedChar,
 }

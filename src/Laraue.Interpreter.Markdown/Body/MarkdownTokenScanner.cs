@@ -3,7 +3,7 @@
 namespace Laraue.Interpreter.Markdown.Body;
 
 public class MarkdownTokenScanner(string input)
-    : TokenScanner<MarkdownTokenType>(input)
+    : TokenScanner<MarkdownTokenType>(input.AsMemory())
 {
     protected override MarkdownTokenType NewLineTokenType => MarkdownTokenType.NewLine;
     protected override bool AddNewLineTokens => true;
@@ -56,29 +56,55 @@ public class MarkdownTokenScanner(string input)
             case '>':
                 AddToken(MarkdownTokenType.GreaterThan);
                 return true;
+            case '~':
+                AddToken(MarkdownTokenType.Tilde);
+                return true;
+            case ':':
+                AddToken(MarkdownTokenType.Colon);
+                return true;
+            case '\\':
+                AddEscapedCharOrBackslash();
+                return true;
             default:
                 AddWordOrNumber();
                 return true;
         }
     }
-    
+
+    private static bool IsEscapableChar(char c) =>
+        c is '*' or '_' or '`' or '#' or '[' or ']' or '(' or ')'
+            or '-' or '!' or '"' or '.' or '>' or '|' or '~' or ':' or '\\';
+
+    private void AddEscapedCharOrBackslash()
+    {
+        if (Check(0, IsEscapableChar))
+        {
+            Advance();
+            var scanned = GetCurrentScanValue();
+            AddToken(MarkdownTokenType.EscapedChar, scanned[1].ToString());
+            return;
+        }
+
+        AddToken(MarkdownTokenType.Word);
+    }
+
     private void AddWordOrNumber()
     {
         var startsWithDigit = Check(-1, IsDigit);
         while (PopNextCharIf(IsDigit));
-        
-        // Digit string found
+
+        // Digit string found. No need to pass an explicit Literal here: the scanned span only
+        // ever contains digits, so it's identical to the Lexeme that AddToken already captures.
         if (startsWithDigit && !Check(0, IsAlpha))
         {
-            var stringValue = GetCurrentScanValue();
-            AddToken(MarkdownTokenType.Number, stringValue.ToString());
+            AddToken(MarkdownTokenType.Number);
             return;
         }
-        
-        // Usual string
+
+        // Usual string. Same reasoning as above: word chars are alnum-only, so Trim() here
+        // never actually removes anything and the Lexeme already equals this value.
         while (PopNextCharIf(IsWordChar));
-        var text = GetCurrentScanValue().Trim();
-        AddToken(MarkdownTokenType.Word, text.ToString());
+        AddToken(MarkdownTokenType.Word);
     }
 
     private bool IsWordChar(char ch)

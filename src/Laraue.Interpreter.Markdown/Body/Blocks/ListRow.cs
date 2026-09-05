@@ -5,5 +5,6 @@ namespace Laraue.Interpreter.Markdown.Body.Blocks;
 public class ListRow
 {
     public required MarkdownContentBlockElement[] Elements { get; init; }
+    public bool IsOrdered { get; init; }
     public List<ListRow> Children { get; } = [];
 }
